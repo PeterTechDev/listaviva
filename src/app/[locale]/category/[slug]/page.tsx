@@ -19,12 +19,21 @@ export default async function CategoryPage({
 
   const supabase = await createClient();
 
-  const { data: category } = await supabase
+  const { data: category, error: categoryError } = await supabase
     .from("categories")
     .select("id, name_pt, name_en, slug, icon")
     .eq("slug", slug)
     .single();
 
+  if (categoryError) {
+    if (categoryError.code === "PGRST116") notFound();
+    console.error("[category-page] Supabase error", {
+      slug,
+      code: categoryError.code,
+      message: categoryError.message,
+    });
+    throw categoryError;
+  }
   if (!category) notFound();
 
   const categoryName =

@@ -6,6 +6,7 @@ import { Header } from "@/components/header";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import PhotoGallery from "./PhotoGallery";
 import type { Metadata } from "next";
+import { parseWorkingHours, buildWhatsAppHref } from "@/lib/supabase/utils";
 
 const SECTION_HEADING =
   "text-sm font-semibold text-muted uppercase tracking-wider mb-2";
@@ -50,12 +51,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const supabase = await createClient();
-  const { data: provider } = await supabase
+  const { data: provider, error: metaError } = await supabase
     .from("providers")
     .select("name, description_pt, description_en")
     .eq("slug", slug)
     .eq("status", "active")
     .single();
+
+  if (metaError && metaError.code !== "PGRST116") {
+    console.error("[provider-page] generateMetadata Supabase error", {
+      slug,
+      code: metaError.code,
+      message: metaError.message,
+    });
+  }
 
   if (!provider) return {};
 
@@ -79,7 +88,7 @@ export default async function ProviderPage({
   const t = await getTranslations({ locale });
   const supabase = await createClient();
 
-  const { data: provider } = await supabase
+  const { data: provider, error: providerError } = await supabase
     .from("providers")
     .select(
       `
@@ -99,6 +108,15 @@ export default async function ProviderPage({
     .eq("status", "active")
     .single();
 
+  if (providerError) {
+    if (providerError.code === "PGRST116") notFound();
+    console.error("[provider-page] Supabase error", {
+      slug,
+      code: providerError.code,
+      message: providerError.message,
+    });
+    throw providerError;
+  }
   if (!provider) notFound();
 
   const photos = (provider.provider_photos ?? [])
@@ -132,11 +150,8 @@ export default async function ProviderPage({
     )
     .filter((b): b is Bairro => b != null);
 
-  const workingHours = (provider.working_hours as Record<string, string>) ?? {};
-
-  const whatsappHref = provider.whatsapp
-    ? `https://wa.me/${provider.whatsapp.replace(/\D/g, "")}`
-    : null;
+  const workingHours = parseWorkingHours(provider.working_hours);
+  const whatsappHref = buildWhatsAppHref(provider.whatsapp);
 
   return (
     <div className="min-h-screen flex flex-col">
