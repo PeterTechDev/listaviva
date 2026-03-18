@@ -46,6 +46,8 @@ New migration `003_search_rpc.sql` adds the `match_providers` RPC function only.
 
 ### `src/lib/embeddings.ts`
 
+Complete file contents:
+
 ```ts
 import OpenAI from "openai";
 
@@ -58,11 +60,7 @@ export async function embedText(text: string): Promise<number[]> {
   });
   return response.data[0].embedding;
 }
-```
 
-### Embedding text construction
-
-```ts
 export function buildProviderText(
   name: string,
   descriptionPt: string | null,
@@ -80,9 +78,9 @@ Category names are fetched after the provider insert from `provider_categories` 
 
 After all provider data is written (categories, service areas, photos), add this block to `createProvider`, `updateProvider`, `createOwnProvider`, and `updateOwnProvider`.
 
-**Important for `createOwnProvider`:** this block must be inserted **before** the final `redirect("/account")` call — `redirect()` throws a `NEXT_REDIRECT` error that terminates execution, so any code after it is unreachable.
+**Important for `createOwnProvider` only:** this block must be inserted **before** the final `redirect("/account")` call — `redirect()` throws a `NEXT_REDIRECT` error that terminates execution, so any code after it is unreachable. For `updateOwnProvider`, `createProvider`, and `updateProvider`, the embedding block can go at the very end (those functions end with `revalidatePath(...)` or `return { success: true }`, not `redirect()`).
 
-Each actions file must also add at the top: `import { buildProviderText, embedText } from "@/lib/embeddings";`
+Each actions file must add at the top: `import { buildProviderText, embedText } from "@/lib/embeddings";`
 
 ```ts
 try {
@@ -114,8 +112,8 @@ try {
 `GET /api/admin/embed-providers` — protected by `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>` header check. Uses a service-role Supabase client (not the standard server client) to bypass RLS. Fetches all active providers where `embedding IS NULL`, generates embeddings sequentially, updates each row. Returns `{ processed: N, errors: M }`.
 
 ```ts
-// Route handler setup
 import { createClient } from "@supabase/supabase-js";
+import { embedText, buildProviderText } from "@/lib/embeddings";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -127,7 +125,40 @@ export async function GET(request: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     serviceKey
   );
-  // ... fetch, embed, update loop
+
+  const { data: providers } = await supabase
+    .from("providers")
+    .select("id, name, description_pt, provider_categories(categories(name_pt))")
+    .eq("status", "active")
+    .is("embedding", null);
+
+  let processed = 0;
+  let errors = 0;
+
+  // Sequential — avoid overwhelming the OpenAI rate limit
+  for (const provider of providers ?? []) {
+    try {
+      const catNames = (provider.provider_categories ?? []).flatMap(
+        (pc: { categories: unknown }) =>
+          Array.isArray(pc.categories)
+            ? (pc.categories as { name_pt: string }[]).map((c) => c.name_pt)
+            : pc.categories
+            ? [(pc.categories as { name_pt: string }).name_pt]
+            : []
+      );
+      const text = buildProviderText(provider.name, provider.description_pt ?? null, catNames);
+      const embedding = await embedText(text);
+      await supabase
+        .from("providers")
+        .update({ embedding: JSON.stringify(embedding) })
+        .eq("id", provider.id);
+      processed++;
+    } catch {
+      errors++;
+    }
+  }
+
+  return Response.json({ processed, errors });
 }
 ```
 
@@ -166,7 +197,9 @@ $$;
 ### `src/lib/search.ts`
 
 ```ts
+// Use unparameterized SupabaseClient — the project has no generated Database types yet
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { embedText } from "@/lib/embeddings";
 
 export type ProviderSearchResult = {
   id: string;
@@ -188,30 +221,81 @@ export async function searchProviders({
   bairroId?: string | null;
   userId?: string | null;
   supabase: SupabaseClient;
-}): Promise<{ results: ProviderSearchResult[]; usedFallback: boolean }>
+}): Promise<{ results: ProviderSearchResult[]; usedFallback: boolean }> {
+  let resultIds: string[] = [];
+  let usedFallback = false;
+
+  // Step 1-3: semantic path
+  try {
+    const embedding = await embedText(query);
+    const { data: rpcRows } = await supabase.rpc("match_providers", {
+      query_embedding: embedding,
+      bairro_filter: bairroId ?? null,
+    });
+    if (rpcRows && rpcRows.length > 0) {
+      resultIds = (rpcRows as { id: string }[]).map((r) => r.id);
+    } else {
+      usedFallback = true;
+    }
+  } catch {
+    usedFallback = true;
+  }
+
+  // Step 4: trigram fallback (description_pt is plain text, not tsvector — use .ilike())
+  if (usedFallback) {
+    let q = supabase
+      .from("providers")
+      .select("id")
+      .eq("status", "active")
+      .or(`name.ilike.%${query}%,description_pt.ilike.%${query}%`);
+    if (bairroId) q = q.eq("home_bairro_id", bairroId);
+    const { data: fallbackRows } = await q;
+    resultIds = (fallbackRows ?? []).map((r: { id: string }) => r.id);
+  }
+
+  // Step 5: log query (anon users get RLS policy violation — swallowed intentionally)
+  try {
+    await supabase.from("search_queries").insert({
+      query_text: query,
+      results_count: resultIds.length,
+      user_id: userId ?? null,
+      bairro_filter_id: bairroId ?? null,
+    });
+  } catch {
+    // non-blocking — RLS blocks anonymous inserts
+  }
+
+  if (resultIds.length === 0) return { results: [], usedFallback };
+
+  // Step 7: enrich — note the nested relation shape from Supabase:
+  // provider_categories returns [{ categories: { name_pt, name_en, icon } }]
+  // must be flattened to categories: { name_pt, name_en, icon }[]
+  const { data: enriched } = await supabase
+    .from("providers")
+    .select(`
+      id, name, slug, description_pt, whatsapp,
+      home_bairro:bairros(name, slug),
+      categories:provider_categories(categories(name_pt, name_en, icon))
+    `)
+    .in("id", resultIds);
+
+  const results: ProviderSearchResult[] = (enriched ?? []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description_pt: row.description_pt,
+    whatsapp: row.whatsapp,
+    home_bairro: row.home_bairro ?? null,
+    // Flatten nested provider_categories → categories relation
+    categories: (row.categories ?? []).flatMap(
+      (pc: { categories: unknown }) =>
+        Array.isArray(pc.categories) ? pc.categories : pc.categories ? [pc.categories] : []
+    ),
+  }));
+
+  return { results, usedFallback };
+}
 ```
-
-**Flow:**
-1. `embedText(query)` → get vector
-2. Call `match_providers` RPC (with `bairro_filter` if provided)
-3. If RPC returns ≥ 1 results → semantic path
-4. If RPC returns 0 → trigram fallback: `providers` table with `.ilike("name", "%q%")` OR `.ilike("description_pt", "%q%")`, filtered by `status = 'active'` and optionally bairro (note: `description_pt` is plain text, not a tsvector — use `.ilike()` not `.textSearch()`)
-5. Log to `search_queries`: `{ query_text: query, results_count, user_id, bairro_filter_id }` — wrap in `try/catch`; the RLS policy requires `auth.uid() is not null`, so anonymous users will get a policy violation error — this is expected and the `try/catch` swallows it gracefully
-6. If `embedText` throws → skip to trigram fallback immediately (graceful degradation)
-7. Fetch full provider rows for the result IDs in a second enrichment query:
-
-```ts
-const { data: enriched } = await supabase
-  .from("providers")
-  .select(`
-    id, name, slug, description_pt, whatsapp,
-    home_bairro:bairros(name, slug),
-    categories:provider_categories(categories(name_pt, name_en, icon))
-  `)
-  .in("id", resultIds);
-```
-
-This assembles `ProviderSearchResult` objects with `home_bairro: { name, slug } | null` and `categories: { name_pt, name_en, icon }[]`.
 
 ## Pages & Components
 
@@ -311,14 +395,15 @@ Verifies:
 New `search` namespace in both message files:
 
 ```
-search.title        — "Busca" / "Search"
-search.placeholder  — "O que você precisa?" / "What do you need?"
+search.title        — "Busca" / "Search"  (used as <title> / <h1> on the results page)
 search.noResults    — "Nenhum prestador encontrado" / "No providers found"
 search.resultsFor   — "Resultados para \"{q}\"" / "Results for \"{q}\""
 search.filterBairro — "Filtrar por bairro" / "Filter by neighborhood"
 search.allBairros   — "Todos os bairros" / "All neighborhoods"
 search.tryWithout   — "Tente sem filtro de bairro" / "Try without neighborhood filter"
 ```
+
+Note: the existing `common.searchPlaceholder` key covers the search input placeholder — do not add a duplicate `search.placeholder` key.
 
 ## Error Handling
 
