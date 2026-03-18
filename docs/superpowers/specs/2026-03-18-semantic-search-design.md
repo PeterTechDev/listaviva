@@ -63,7 +63,27 @@ search(
     limit?: number      // default: 20
   }
 ): Promise<Provider[]>
+
+// Provider — the shape returned by search()
+interface Provider {
+  id: string
+  name: string
+  slug: string
+  description_pt: string | null
+  description_en: string | null
+  whatsapp: string | null
+  home_bairro: { id: string; name: string } | null
+  categories: { id: string; name_pt: string; slug: string }[]
+  photos: { url: string; sort_order: number }[]
+  similarity_score: number   // cosine similarity (0–1); 0 when result came from fallback
+}
 ```
+
+### Similarity Threshold
+
+Vector search uses a minimum cosine similarity of `0.30`. Results below this threshold are dropped — they indicate the query has no meaningful semantic match in the catalog.
+
+When vector search returns 0 results above the threshold (or OpenAI is unavailable), the fallback runs. The fallback has no similarity threshold — it returns whatever pg_trgm finds, ordered by text relevance score.
 
 ### EmbeddingProvider Interface
 
@@ -97,7 +117,10 @@ User query: "quero um eletricista no centro"
      │                                   → ranked Provider[]
      │
      └─ OpenAI unavailable ────────────► pg_trgm full-text fallback
-                                         → Provider[]
+     │   (any of: missing OPENAI_API_KEY,   → Provider[]
+     │    non-2xx HTTP response, thrown
+     │    exception, or 0 results above
+     │    similarity threshold 0.30)
      │
      ▼
 4. log to search_queries (always)       query text, results count, bairro filter,
@@ -178,16 +201,35 @@ Every search is logged. Zero-result searches are the signal.
 
 Integration tests against a real Supabase test project. No mocks — consistent with project testing philosophy.
 
-| Test | Assertion |
-|------|-----------|
-| `search("consertar chuveiro")` | Returns electricians/plumbers, ranked by relevance |
-| `search("cabeleireira", { bairroId })` | Returns only providers who serve that bairro |
-| `search("xyz123irrelevant")` | Returns `[]` AND logs a zero-result entry to DB |
-| `search(...)` with OpenAI unavailable | Falls back to pg_trgm, still returns results |
-| `embed("João Silva Elétrica...")` | Returns array of length 1536 |
-| Zero-result query with bairroId | bairro_filter_id populated in search_queries log |
+### Seed Data (created before tests run)
 
-Seed data: 4 providers across known categories (eletricista, cabeleireiro, diarista, encanador) in known bairros. Tests assert ordering, not just presence.
+```
+Provider A: "João Elétrica" — category: Eletricista — bairro: Centro — serves: [Centro, Movelar]
+Provider B: "Maria Cabelos" — category: Cabeleireiro — bairro: Shell — serves: [Shell, Colina]
+Provider C: "Limpeza Total" — category: Diarista — bairro: Centro — serves: [Centro]
+Provider D: "Carlos Encanamentos" — category: Encanador — bairro: Movelar — serves: [Movelar, Centro]
+```
+
+### Test Cases
+
+| # | Input | Options | Expected result | Pass condition |
+|---|-------|---------|-----------------|----------------|
+| 1 | `"consertar chuveiro"` | none | Provider A and/or D | Both electrician and plumber appear; A or D is rank 1 |
+| 2 | `"cabeleireira"` | `{ bairroId: Shell.id }` | Provider B only | B appears; A, C, D do not appear |
+| 3 | `"cabeleireira"` | `{ bairroId: Centro.id }` | Empty or no B | B does not appear (doesn't serve Centro) |
+| 4 | `"xyz123irrelevant@@##"` | none | `[]` | Returns empty array AND `search_queries` table has 1 new row with `results_count: 0` |
+| 5 | `"consertar chuveiro"` | none (OpenAI key set to invalid) | Provider A or D | Returns results via pg_trgm fallback; `similarity_score: 0` on all results |
+| 6 | `"chaveiro"` | `{ bairroId: Centro.id }` | `[]` | Zero-result log row has `bairro_filter_id: Centro.id` populated |
+
+### EmbeddingProvider Contract Test
+
+```ts
+// Not an integration test — call OpenAI directly
+const provider = new OpenAIEmbeddingProvider()
+const vector = await provider.embed("João Silva Elétrica. Eletricista. Bairro: Centro")
+expect(vector).toHaveLength(1536)
+expect(vector.every(n => typeof n === "number")).toBe(true)
+```
 
 ---
 
