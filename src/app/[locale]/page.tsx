@@ -25,10 +25,10 @@ export default async function HomePage({
       <main className="flex-1">
         {/* Hero */}
         <section className="max-w-5xl mx-auto px-4 pt-16 pb-12 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+          <h1 className="font-display text-4xl sm:text-5xl font-semibold text-primary leading-tight tracking-tight">
             {t("home.hero")}
-          </h2>
-          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
+          </h1>
+          <p className="mt-4 text-base text-muted max-w-md mx-auto leading-relaxed">
             {t("home.subtitle")}
           </p>
 
@@ -40,11 +40,11 @@ export default async function HomePage({
                   type="text"
                   name="q"
                   placeholder={t("common.searchPlaceholder")}
-                  className="w-full h-12 pl-4 pr-12 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm"
+                  className="w-full h-14 pl-5 pr-32 rounded-xl border border-border bg-surface text-primary placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent shadow-sm text-base"
                 />
                 <button
                   type="submit"
-                  className="absolute right-2 top-2 h-8 px-4 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
+                  className="absolute right-2 top-2 h-10 px-5 bg-accent text-white rounded-lg text-sm font-semibold hover:bg-accent-hover transition-colors"
                 >
                   {t("common.search")}
                 </button>
@@ -56,20 +56,20 @@ export default async function HomePage({
         {/* Category grid */}
         {categories && categories.length > 0 && (
           <section className="max-w-5xl mx-auto px-4 pb-16">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">
+            <h2 className="font-display text-2xl font-medium text-primary mb-5">
               {t("home.featuredCategories")}
-            </h3>
+            </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/category/${cat.slug}`}
-                  className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-sm transition-all group"
+                  className="flex items-center gap-3 p-4 bg-surface rounded-xl border border-border hover:border-accent hover:shadow-sm transition-all group"
                 >
                   {cat.icon && (
                     <span className="text-2xl flex-shrink-0">{cat.icon}</span>
                   )}
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 transition-colors">
+                  <span className="text-sm font-medium text-primary group-hover:text-accent transition-colors leading-snug">
                     {locale === "en" ? (cat.name_en ?? cat.name_pt) : cat.name_pt}
                   </span>
                 </Link>
@@ -79,11 +79,11 @@ export default async function HomePage({
         )}
 
         {/* How it works */}
-        <section className="bg-gray-50 py-16">
+        <section className="bg-surface py-14">
           <div className="max-w-5xl mx-auto px-4">
-            <h3 className="text-2xl font-bold text-center text-gray-900 mb-12">
+            <h2 className="font-display text-2xl font-medium text-center text-primary mb-10">
               {t("home.howItWorks")}
-            </h3>
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {[
                 {
@@ -103,13 +103,11 @@ export default async function HomePage({
                 },
               ].map(({ step, title, desc }) => (
                 <div key={step} className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xl flex items-center justify-center mx-auto">
+                  <div className="w-11 h-11 rounded-full bg-accent text-white font-display font-semibold text-lg flex items-center justify-center mx-auto">
                     {step}
                   </div>
-                  <h4 className="mt-4 text-lg font-semibold text-gray-900">
-                    {title}
-                  </h4>
-                  <p className="mt-2 text-gray-500">{desc}</p>
+                  <h3 className="mt-4 text-base font-semibold text-primary">{title}</h3>
+                  <p className="mt-2 text-sm text-muted leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
@@ -117,8 +115,8 @@ export default async function HomePage({
         </section>
       </main>
 
-      <footer className="border-t border-gray-100 py-8">
-        <div className="max-w-5xl mx-auto px-4 text-center text-sm text-gray-400">
+      <footer className="border-t border-border py-8">
+        <div className="max-w-5xl mx-auto px-4 text-center text-sm text-muted">
           {t("common.appName")} &mdash; {t("common.tagline")}
         </div>
       </footer>
