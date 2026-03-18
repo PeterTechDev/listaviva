@@ -79,6 +79,7 @@ export async function searchProviders({
       `)
       .in("id", resultIds);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: ProviderSearchResult[] = (enriched ?? []).map((row: any) => ({
       id: row.id,
       name: row.name,
