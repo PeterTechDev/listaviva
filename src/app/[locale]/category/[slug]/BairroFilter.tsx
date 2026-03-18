@@ -15,7 +15,6 @@ export default function BairroFilter({
 }: {
   bairros: Bairro[];
   currentBairro: string;
-  filterLabel: string; // kept for interface compat, not rendered
   allLabel: string;
 }) {
   const router = useRouter();

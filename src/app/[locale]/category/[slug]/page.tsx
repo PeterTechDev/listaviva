@@ -177,7 +177,6 @@ function CategoryPageLayout({
           <BairroFilter
             bairros={bairros}
             currentBairro={currentBairro ?? ""}
-            filterLabel={t("catalog.filterByBairro")}
             allLabel={t("catalog.allBairros")}
           />
         </div>
