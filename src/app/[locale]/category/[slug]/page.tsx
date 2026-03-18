@@ -136,7 +136,12 @@ export default async function CategoryPage({
                   </div>
                 )}
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900">{provider.name}</h3>
+                  <Link
+                    href={`/provider/${provider.slug}`}
+                    className="font-semibold text-gray-900 hover:text-emerald-700 transition-colors"
+                  >
+                    {provider.name}
+                  </Link>
                   {bairroName && (
                     <p className="text-xs text-emerald-600 mt-0.5">
                       📍 {bairroName}

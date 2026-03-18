@@ -37,7 +37,12 @@
     "photos": "Photos",
     "contactWhatsApp": "Contact on WhatsApp",
     "claimListing": "Is this your business? Claim your profile",
-    "recommend": "Recommend a provider"
+    "recommend": "Recommend a provider",
+    "noDescription": "No description available.",
+    "closed": "Closed",
+    "categories": "Categories",
+    "serviceAreas": "Service Areas",
+    "workingHours": "Working Hours"
   },
   "auth": {
     "loginTitle": "Sign in to Listaviva",

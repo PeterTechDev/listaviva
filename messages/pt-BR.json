@@ -37,7 +37,12 @@
     "photos": "Fotos",
     "contactWhatsApp": "Chamar no WhatsApp",
     "claimListing": "Este é seu negócio? Reivindique seu perfil",
-    "recommend": "Recomendar um prestador"
+    "recommend": "Recomendar um prestador",
+    "noDescription": "Sem descrição disponível.",
+    "closed": "Fechado",
+    "categories": "Categorias",
+    "serviceAreas": "Áreas de Atendimento",
+    "workingHours": "Horários de Funcionamento"
   },
   "auth": {
     "loginTitle": "Entrar no Listaviva",
