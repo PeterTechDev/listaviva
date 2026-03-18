@@ -165,6 +165,7 @@ describe("approveRecommendation", () => {
   it("skips provider_categories insert when category_id is null", async () => {
     const rec = { ...RECOMMENDATION, category_id: null };
     const supabase = makeSupabaseMock({ categoryId: null });
+    mockCreateClient.mockResolvedValue(supabase);
     // Override recommendation data
     (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
       if (table === "recommendations") {
