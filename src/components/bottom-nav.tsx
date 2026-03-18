@@ -1,7 +1,6 @@
 "use client";
 
-import { usePathname } from "@/i18n/navigation";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 const tabs = [
@@ -59,7 +58,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-50 bg-background border-t border-border"
+      className="fixed bottom-0 inset-x-0 z-50 bg-background border-t border-border md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="grid grid-cols-4 h-16">

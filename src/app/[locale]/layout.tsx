@@ -57,7 +57,7 @@ export default async function LocaleLayout({
       </head>
       <body className="font-sans bg-background text-primary antialiased">
         <NextIntlClientProvider messages={messages}>
-          <div className="pb-20">
+          <div className="pb-20 md:pb-0">
             {children}
           </div>
           <BottomNav />
