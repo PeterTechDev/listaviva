@@ -58,6 +58,24 @@ describe("getCurrentUser", () => {
 
     expect(result).toBeNull();
   });
+
+  it("returns null and logs when profile fetch returns a db error", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST301", message: "connection refused" },
+    });
+
+    const result = await getCurrentUser();
+
+    expect(result).toBeNull();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[auth]"),
+      expect.objectContaining({ code: "PGRST301" })
+    );
+    consoleSpy.mockRestore();
+  });
 });
 
 // ── requireAuth ───────────────────────────────────────────────────────────────

@@ -20,11 +20,19 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("id, role, full_name, avatar_url, locale")
     .eq("id", user.id)
     .single();
+
+  if (error) {
+    console.error("[auth] profile fetch failed", {
+      userId: user.id,
+      code: error.code,
+      message: error.message,
+    });
+  }
 
   return profile ?? null;
 }
