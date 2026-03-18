@@ -18,7 +18,6 @@ export default async function CreateListingPage({
 
   if (!user) redirect(`/${locale}/login`);
 
-  // Already has a listing → go to account
   const supabase = await createClient();
   const { data: existing } = await supabase
     .from("providers")
@@ -40,11 +39,11 @@ export default async function CreateListingPage({
         <div className="flex items-center gap-4 mb-6">
           <Link
             href="/account"
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-sm text-muted hover:text-primary transition-colors"
           >
             ← {t("common.back")}
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-primary">
             {t("account.createListing")}
           </h1>
         </div>
