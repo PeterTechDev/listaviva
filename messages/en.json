@@ -138,7 +138,8 @@
     "fri": "Friday",
     "sat": "Saturday",
     "sun": "Sunday",
-    "basicInfo": "Basic information"
+    "basicInfo": "Basic information",
+    "workingHoursHint": "e.g. 08:00–18:00 · {closed}: leave blank"
   },
   "catalog": {
     "browseByCategory": "Browse by category",

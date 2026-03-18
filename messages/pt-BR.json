@@ -138,7 +138,8 @@
     "fri": "Sexta",
     "sat": "Sábado",
     "sun": "Domingo",
-    "basicInfo": "Informações básicas"
+    "basicInfo": "Informações básicas",
+    "workingHoursHint": "Ex: 08:00–18:00 · {closed}: deixe em branco"
   },
   "catalog": {
     "browseByCategory": "Navegar por categoria",

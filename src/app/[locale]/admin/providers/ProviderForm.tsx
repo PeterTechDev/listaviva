@@ -368,7 +368,7 @@ export default function ProviderForm({
           ))}
         </div>
         <p className="mt-2 text-xs text-muted">
-          Ex: 08:00–18:00 · {t("closed")}: deixe em branco
+          {t("workingHoursHint", { closed: t("closed") })}
         </p>
       </section>
 
