@@ -26,7 +26,7 @@ New migration `003_search_rpc.sql` adds the `match_providers` RPC function only.
 
 | File | Action | Purpose |
 |---|---|---|
-| `src/lib/embeddings.ts` | Create | `embedText(text): Promise<number[]>` via OpenAI SDK |
+| `src/lib/embeddings.ts` | Create | `embedText(text): Promise<number[]>` via OpenAI SDK; also exports `buildProviderText` |
 | `src/lib/search.ts` | Create | Full search pipeline: embed → similarity → fallback → log |
 | `src/app/[locale]/search/page.tsx` | Create | Results page (Server Component) |
 | `src/app/api/admin/embed-providers/route.ts` | Create | Batch embed all providers (service role, admin-only) |
@@ -62,7 +62,7 @@ export async function embedText(text: string): Promise<number[]> {
 ### Embedding text construction
 
 ```ts
-function buildProviderText(
+export function buildProviderText(
   name: string,
   descriptionPt: string | null,
   categoryNames: string[]
@@ -106,7 +106,25 @@ try {
 
 ### Batch route
 
-`GET /api/admin/embed-providers` — uses `SUPABASE_SERVICE_ROLE_KEY`. Protected by `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>` header check. Fetches all active providers where `embedding IS NULL`, generates embeddings sequentially, updates each row. Returns `{ processed: N, errors: M }`.
+`GET /api/admin/embed-providers` — protected by `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>` header check. Uses a service-role Supabase client (not the standard server client) to bypass RLS. Fetches all active providers where `embedding IS NULL`, generates embeddings sequentially, updates each row. Returns `{ processed: N, errors: M }`.
+
+```ts
+// Route handler setup
+import { createClient } from "@supabase/supabase-js";
+
+export async function GET(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  if (authHeader !== `Bearer ${serviceKey}`) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceKey
+  );
+  // ... fetch, embed, update loop
+}
+```
 
 ## Search Pipeline
 
@@ -143,6 +161,8 @@ $$;
 ### `src/lib/search.ts`
 
 ```ts
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 export type ProviderSearchResult = {
   id: string;
   name: string;
@@ -170,8 +190,8 @@ export async function searchProviders({
 1. `embedText(query)` → get vector
 2. Call `match_providers` RPC (with `bairro_filter` if provided)
 3. If RPC returns ≥ 1 results → semantic path
-4. If RPC returns 0 → trigram fallback: `providers` table with `.ilike("name", "%q%")` and `.textSearch` on `description_pt`, filtered by `status = 'active'` and optionally bairro
-5. Log to `search_queries`: `{ query_text: query, results_count, user_id, bairro_filter_id }`
+4. If RPC returns 0 → trigram fallback: `providers` table with `.ilike("name", "%q%")` OR `.ilike("description_pt", "%q%")`, filtered by `status = 'active'` and optionally bairro (note: `description_pt` is plain text, not a tsvector — use `.ilike()` not `.textSearch()`)
+5. Log to `search_queries`: `{ query_text: query, results_count, user_id, bairro_filter_id }` — wrap in `try/catch`; anonymous users may be blocked by RLS and the insert will silently fail, which is acceptable
 6. If `embedText` throws → skip to trigram fallback immediately (graceful degradation)
 7. Fetch full provider rows (bairro name, categories) for the result IDs in a second query
 
@@ -211,7 +231,7 @@ export default defineConfig({
 });
 ```
 
-Dev deps: `vitest`, `vite-tsconfig-paths`, `@vitest/coverage-v8`.
+Dev deps: `vitest`, `vite-tsconfig-paths`, `@vitest/coverage-v8`. Production dep: `openai` (for `embedText`).
 
 ### `src/lib/embeddings.test.ts`
 
@@ -222,7 +242,47 @@ Mocks `openai` module. Verifies:
 
 ### `src/lib/search.test.ts`
 
-Mocks Supabase client and `embedText`. Verifies:
+Mocks Supabase client and `embedText`. The Supabase mock must support chained query builder calls. Use a builder factory pattern:
+
+```ts
+import { vi } from "vitest";
+import * as embeddingsModule from "@/lib/embeddings";
+
+vi.mock("@/lib/embeddings");
+
+function makeSupabaseMock({
+  rpcData = [],
+  ilikeData = [],
+  enrichData = [],
+}: {
+  rpcData?: unknown[];
+  ilikeData?: unknown[];
+  enrichData?: unknown[];
+}) {
+  const builder = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
+    ilike: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockResolvedValue({ error: null }),
+  };
+  return {
+    rpc: vi.fn().mockResolvedValue({ data: rpcData, error: null }),
+    from: vi.fn().mockImplementation((table: string) => {
+      if (table === "providers") {
+        return { ...builder, then: async () => ({ data: enrichData, error: null }) };
+      }
+      if (table === "search_queries") {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      return { ...builder, then: async () => ({ data: ilikeData, error: null }) };
+    }),
+  };
+}
+```
+
+Verifies:
 - **Semantic path**: RPC returns results → they are returned, `results_count > 0` logged
 - **Fallback path**: RPC returns empty → trigram query runs, result logged
 - **Zero-result logging**: both paths log `results_count: 0` when nothing found
