@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/navigation";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
+import { buildWhatsAppHref } from "@/lib/supabase/utils";
 
 interface ProviderCardProps {
   name: string;
@@ -30,6 +31,7 @@ export function ProviderCard({
   locale,
   contactLabel,
 }: ProviderCardProps) {
+  const waHref = buildWhatsAppHref(whatsapp);
   return (
     <div className="bg-surface rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow">
       {photoUrl ? (
@@ -70,9 +72,9 @@ export function ProviderCard({
         {description && (
           <p className="mt-2 text-sm text-muted line-clamp-2">{description}</p>
         )}
-        {whatsapp && (
+        {waHref && (
           <a
-            href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
+            href={waHref}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 flex items-center gap-1.5 text-sm font-medium text-whatsapp hover:opacity-80 transition-opacity"

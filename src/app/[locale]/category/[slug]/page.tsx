@@ -19,21 +19,37 @@ export default async function CategoryPage({
 
   const supabase = await createClient();
 
-  const { data: category } = await supabase
+  const { data: category, error: categoryError } = await supabase
     .from("categories")
     .select("id, name_pt, name_en, slug, icon")
     .eq("slug", slug)
     .single();
 
+  if (categoryError) {
+    if (categoryError.code === "PGRST116") notFound();
+    console.error("[category-page] Supabase error", {
+      slug,
+      code: categoryError.code,
+      message: categoryError.message,
+    });
+    throw categoryError;
+  }
   if (!category) notFound();
 
   const categoryName =
     locale === "en" ? (category.name_en ?? category.name_pt) : category.name_pt;
 
-  const { data: bairros } = await supabase
+  const { data: bairros, error: bairrosError } = await supabase
     .from("bairros")
     .select("id, name, slug")
     .order("name");
+
+  if (bairrosError) {
+    console.error("[category-page] bairros fetch failed", {
+      code: bairrosError.code,
+      message: bairrosError.message,
+    });
+  }
 
   let providerQuery = supabase
     .from("providers")
@@ -79,7 +95,15 @@ export default async function CategoryPage({
     providerQuery = providerQuery.in("id", ids);
   }
 
-  const { data: providers } = await providerQuery;
+  const { data: providers, error: providersError } = await providerQuery;
+
+  if (providersError) {
+    console.error("[category-page] providers fetch failed", {
+      slug,
+      code: providersError.code,
+      message: providersError.message,
+    });
+  }
 
   return (
     <CategoryPageLayout
