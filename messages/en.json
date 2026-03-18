@@ -197,5 +197,26 @@
     "filterBairro": "Filter by neighborhood",
     "allBairros": "All neighborhoods",
     "tryWithout": "Try without neighborhood filter"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Overview",
+    "searchAnalytics": "Search Analytics",
+    "supplyDemand": "Supply & Demand",
+    "activeProviders": "Active providers",
+    "pendingProviders": "Pending providers",
+    "totalSearches": "Total searches",
+    "pendingActions": "Pending actions",
+    "byCategory": "By category",
+    "byBairro": "By neighborhood",
+    "topQueries": "Top queries",
+    "zeroResults": "Zero-result searches",
+    "query": "Query",
+    "count": "Count",
+    "avgResults": "Avg results",
+    "category": "Category",
+    "searches": "Searches",
+    "providers": "Providers",
+    "noData": "No data yet"
   }
 }

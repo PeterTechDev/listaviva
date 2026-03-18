@@ -197,5 +197,26 @@
     "filterBairro": "Filtrar por bairro",
     "allBairros": "Todos os bairros",
     "tryWithout": "Tente sem filtro de bairro"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Visão geral",
+    "searchAnalytics": "Buscas",
+    "supplyDemand": "Oferta & Demanda",
+    "activeProviders": "Prestadores ativos",
+    "pendingProviders": "Prestadores pendentes",
+    "totalSearches": "Total de buscas",
+    "pendingActions": "Ações pendentes",
+    "byCategory": "Por categoria",
+    "byBairro": "Por bairro",
+    "topQueries": "Buscas mais frequentes",
+    "zeroResults": "Buscas sem resultado",
+    "query": "Busca",
+    "count": "Contagem",
+    "avgResults": "Média de resultados",
+    "category": "Categoria",
+    "searches": "Buscas",
+    "providers": "Prestadores",
+    "noData": "Sem dados ainda"
   }
 }
