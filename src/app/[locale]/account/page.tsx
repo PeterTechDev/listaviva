@@ -27,30 +27,30 @@ export default async function AccountPage({
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 max-w-2xl mx-auto px-4 py-12 w-full">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">
+        <h1 className="text-2xl font-bold text-primary mb-8">
           {t("account.title")}
         </h1>
 
         {provider ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="bg-surface rounded-xl border border-border p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-semibold text-gray-900">{provider.name}</h2>
+                <h2 className="font-semibold text-primary">{provider.name}</h2>
                 <span
-                  className={`inline-flex mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                  className={`inline-flex mt-1 px-2 py-0.5 rounded text-xs font-medium border ${
                     provider.status === "active"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-yellow-100 text-yellow-700"
+                      ? "border-border text-accent"
+                      : "border-border text-muted"
                   }`}
                 >
                   {provider.status === "active"
-                    ? "Ativo"
+                    ? t("account.statusActive")
                     : t("account.listingPending")}
                 </span>
               </div>
               <Link
                 href="/account/edit"
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
               >
                 {t("account.editListing")}
               </Link>
@@ -58,13 +58,13 @@ export default async function AccountPage({
             <div className="flex gap-3 pt-2">
               <Link
                 href={`/provider/${provider.slug}`}
-                className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                className="text-sm text-accent hover:text-accent-hover transition-colors"
               >
-                Ver perfil público →
+                {t("account.viewPublicProfile")}
               </Link>
               <Link
                 href="/account/recommend"
-                className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                className="text-sm text-accent hover:text-accent-hover transition-colors"
               >
                 {t("recommendations.recommend")}
               </Link>
@@ -74,38 +74,38 @@ export default async function AccountPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               href="/account/create"
-              className="flex flex-col items-center gap-3 p-8 bg-white rounded-xl border-2 border-emerald-200 hover:border-emerald-400 hover:shadow-sm transition-all text-center"
+              className="flex flex-col items-center gap-3 p-8 bg-surface rounded-xl border-2 border-border hover:border-accent hover:shadow-sm transition-all text-center"
             >
               <span className="text-4xl">✨</span>
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-primary">
                 {t("account.createListing")}
               </span>
-              <span className="text-sm text-gray-500">
-                Crie um novo perfil para o seu negócio
+              <span className="text-sm text-muted">
+                {t("account.createListingDesc")}
               </span>
             </Link>
             <Link
               href="/account/claim"
-              className="flex flex-col items-center gap-3 p-8 bg-white rounded-xl border-2 border-gray-200 hover:border-gray-400 hover:shadow-sm transition-all text-center"
+              className="flex flex-col items-center gap-3 p-8 bg-surface rounded-xl border-2 border-border hover:border-accent hover:shadow-sm transition-all text-center"
             >
               <span className="text-4xl">🔍</span>
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-primary">
                 {t("account.claimListing")}
               </span>
-              <span className="text-sm text-gray-500">
-                Reivindique um perfil já existente
+              <span className="text-sm text-muted">
+                {t("account.claimListingDesc")}
               </span>
             </Link>
             <Link
               href="/account/recommend"
-              className="flex flex-col items-center gap-3 p-8 bg-white rounded-xl border-2 border-blue-200 hover:border-blue-400 hover:shadow-sm transition-all text-center"
+              className="flex flex-col items-center gap-3 p-8 bg-surface rounded-xl border-2 border-border hover:border-accent hover:shadow-sm transition-all text-center"
             >
               <span className="text-4xl">💡</span>
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-primary">
                 {t("recommendations.recommend")}
               </span>
-              <span className="text-sm text-gray-500">
-                Recomende um novo fornecedor
+              <span className="text-sm text-muted">
+                {t("account.recommendCardDesc")}
               </span>
             </Link>
           </div>
