@@ -187,7 +187,8 @@
     "approve": "Approve",
     "reject": "Reject",
     "submitter": "Submitted by",
-    "date": "Date"
+    "date": "Date",
+    "actions": "Actions"
   },
   "search": {
     "title": "Search",

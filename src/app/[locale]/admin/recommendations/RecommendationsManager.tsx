@@ -50,14 +50,14 @@ export default function RecommendationsManager({
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2 pr-4 font-medium">Provider</th>
+              <th className="py-2 pr-4 font-medium">{t("providerName")}</th>
               <th className="py-2 pr-4 font-medium">{t("category")}</th>
               <th className="py-2 pr-4 font-medium">{t("whatsapp")}</th>
               <th className="py-2 pr-4 font-medium">{t("bairro")}</th>
               <th className="py-2 pr-4 font-medium">{t("description")}</th>
               <th className="py-2 pr-4 font-medium">{t("submitter")}</th>
               <th className="py-2 pr-4 font-medium">{t("date")}</th>
-              <th className="py-2 font-medium">Actions</th>
+              <th className="py-2 font-medium">{t("actions")}</th>
             </tr>
           </thead>
           <tbody>
