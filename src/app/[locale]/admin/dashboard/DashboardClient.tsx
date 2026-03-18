@@ -79,7 +79,7 @@ export default function DashboardClient({
 
       {/* Tab: Overview */}
       {activeTab === "overview" && (
-        <div className="space-y-6">
+        <div role="tabpanel" className="space-y-6">
           {/* Stat cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label={t("activeProviders")} value={stats.active} />
@@ -89,7 +89,7 @@ export default function DashboardClient({
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="col-span-2 bg-white rounded-lg border border-gray-200 p-4">
               <h2 className="text-sm font-semibold mb-4">{t("byCategory")}</h2>
               {byCategory.length === 0 ? (
@@ -133,7 +133,7 @@ export default function DashboardClient({
 
       {/* Tab: Search Analytics */}
       {activeTab === "search" && (
-        <div className="grid grid-cols-2 gap-4">
+        <div role="tabpanel" className="grid grid-cols-2 gap-4">
           {/* Top queries */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h2 className="text-sm font-semibold mb-4">{t("topQueries")}</h2>
@@ -153,7 +153,7 @@ export default function DashboardClient({
                     <tr key={row.query_text} className="border-b border-gray-50">
                       <td className="py-2">{row.query_text}</td>
                       <td className="py-2 text-right">{Number(row.search_count)}</td>
-                      <td className="py-2 text-right">{Number(row.avg_results)}</td>
+                      <td className="py-2 text-right">{Number(row.avg_results).toFixed(1)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -190,7 +190,7 @@ export default function DashboardClient({
 
       {/* Tab: Supply & Demand */}
       {activeTab === "supply" && (
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div role="tabpanel" className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="text-sm font-semibold mb-4">{t("supplyDemand")}</h2>
           {supplyDemand.length === 0 ? (
             <p className="text-sm text-gray-400">{t("noData")}</p>
