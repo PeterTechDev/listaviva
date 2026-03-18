@@ -55,12 +55,20 @@ export default async function AccountPage({
                 {t("account.editListing")}
               </Link>
             </div>
-            <Link
-              href={`/provider/${provider.slug}`}
-              className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
-            >
-              Ver perfil público →
-            </Link>
+            <div className="flex gap-3 pt-2">
+              <Link
+                href={`/provider/${provider.slug}`}
+                className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                Ver perfil público →
+              </Link>
+              <Link
+                href="/account/recommend"
+                className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                {t("recommendations.recommend")}
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -86,6 +94,18 @@ export default async function AccountPage({
               </span>
               <span className="text-sm text-gray-500">
                 Reivindique um perfil já existente
+              </span>
+            </Link>
+            <Link
+              href="/account/recommend"
+              className="flex flex-col items-center gap-3 p-8 bg-white rounded-xl border-2 border-blue-200 hover:border-blue-400 hover:shadow-sm transition-all text-center"
+            >
+              <span className="text-4xl">💡</span>
+              <span className="font-semibold text-gray-900">
+                {t("recommendations.recommend")}
+              </span>
+              <span className="text-sm text-gray-500">
+                Recomende um novo fornecedor
               </span>
             </Link>
           </div>
