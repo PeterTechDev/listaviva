@@ -59,10 +59,12 @@ export default function DashboardClient({
       <h1 className="text-2xl font-bold mb-6">{t("title")}</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-gray-200 mb-6">
+      <div role="tablist" className="flex gap-1 border-b border-gray-200 mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
               activeTab === tab.id
@@ -79,7 +81,7 @@ export default function DashboardClient({
       {activeTab === "overview" && (
         <div className="space-y-6">
           {/* Stat cards */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label={t("activeProviders")} value={stats.active} />
             <StatCard label={t("pendingProviders")} value={stats.pending} />
             <StatCard label={t("totalSearches")} value={totalSearches} />
@@ -189,10 +191,7 @@ export default function DashboardClient({
       {/* Tab: Supply & Demand */}
       {activeTab === "supply" && (
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-sm font-semibold mb-1">{t("supplyDemand")}</h2>
-          <p className="text-xs text-gray-400 mb-4">
-            Categories with fewest providers — biggest supply gaps.
-          </p>
+          <h2 className="text-sm font-semibold mb-4">{t("supplyDemand")}</h2>
           {supplyDemand.length === 0 ? (
             <p className="text-sm text-gray-400">{t("noData")}</p>
           ) : (
