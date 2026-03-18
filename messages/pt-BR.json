@@ -58,7 +58,8 @@
     "bairros": "Bairros",
     "users": "Usuários",
     "recommendations": "Indicações",
-    "analytics": "Dados"
+    "analytics": "Dados",
+    "claims": "Reivindicações"
   },
   "adminBairros": {
     "title": "Bairros",
@@ -147,5 +148,29 @@
     "categories": "Categorias em destaque",
     "viewAll": "Ver todos",
     "servesArea": "Atende na área"
+  },
+  "account": {
+    "title": "Minha conta",
+    "becomeProvider": "Quero ser prestador",
+    "createListing": "Criar novo anúncio",
+    "claimListing": "Reivindicar anúncio existente",
+    "myListing": "Meu anúncio",
+    "editListing": "Editar anúncio",
+    "listingPending": "Aguardando aprovação",
+    "claimSearch": "Buscar por nome ou telefone...",
+    "claimSubmit": "Solicitar este anúncio",
+    "claimSent": "Solicitação enviada! Aguarde a aprovação do administrador.",
+    "claimDuplicate": "Você já tem uma solicitação pendente para este anúncio.",
+    "claimOwned": "Este anúncio já tem um dono."
+  },
+  "adminClaims": {
+    "title": "Reivindicações",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "empty": "Nenhuma solicitação pendente",
+    "claimant": "Solicitante",
+    "provider": "Anúncio",
+    "message": "Mensagem",
+    "createdAt": "Data"
   }
 }

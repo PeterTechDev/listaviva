@@ -58,7 +58,8 @@
     "bairros": "Neighborhoods",
     "users": "Users",
     "recommendations": "Recommendations",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "claims": "Claims"
   },
   "adminBairros": {
     "title": "Neighborhoods",
@@ -147,5 +148,29 @@
     "categories": "Featured categories",
     "viewAll": "View all",
     "servesArea": "Serves this area"
+  },
+  "account": {
+    "title": "My account",
+    "becomeProvider": "Become a provider",
+    "createListing": "Create new listing",
+    "claimListing": "Claim existing listing",
+    "myListing": "My listing",
+    "editListing": "Edit listing",
+    "listingPending": "Pending approval",
+    "claimSearch": "Search by name or phone...",
+    "claimSubmit": "Request this listing",
+    "claimSent": "Request sent! Awaiting admin approval.",
+    "claimDuplicate": "You already have a pending request for this listing.",
+    "claimOwned": "This listing already has an owner."
+  },
+  "adminClaims": {
+    "title": "Claim Requests",
+    "approve": "Approve",
+    "reject": "Reject",
+    "empty": "No pending requests",
+    "claimant": "Claimant",
+    "provider": "Listing",
+    "message": "Message",
+    "createdAt": "Date"
   }
 }
