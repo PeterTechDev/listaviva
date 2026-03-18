@@ -39,10 +39,17 @@ export default async function CategoryPage({
   const categoryName =
     locale === "en" ? (category.name_en ?? category.name_pt) : category.name_pt;
 
-  const { data: bairros } = await supabase
+  const { data: bairros, error: bairrosError } = await supabase
     .from("bairros")
     .select("id, name, slug")
     .order("name");
+
+  if (bairrosError) {
+    console.error("[category-page] bairros fetch failed", {
+      code: bairrosError.code,
+      message: bairrosError.message,
+    });
+  }
 
   let providerQuery = supabase
     .from("providers")
@@ -88,7 +95,15 @@ export default async function CategoryPage({
     providerQuery = providerQuery.in("id", ids);
   }
 
-  const { data: providers } = await providerQuery;
+  const { data: providers, error: providersError } = await providerQuery;
+
+  if (providersError) {
+    console.error("[category-page] providers fetch failed", {
+      slug,
+      code: providersError.code,
+      message: providersError.message,
+    });
+  }
 
   return (
     <CategoryPageLayout

@@ -71,8 +71,8 @@ describe("getCurrentUser", () => {
 
     expect(result).toBeNull();
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("[auth]"),
-      expect.objectContaining({ code: "PGRST301" })
+      "[auth] profile fetch failed",
+      { userId: "user-1", code: "PGRST301", message: "connection refused" }
     );
     consoleSpy.mockRestore();
   });

@@ -26,6 +26,13 @@ describe("parseWorkingHours", () => {
   it("returns {} for undefined", () => {
     expect(parseWorkingHours(undefined)).toEqual({});
   });
+
+  it("returns object as-is when values are non-strings", () => {
+    // Supabase may return unexpected value types; we pass them through rather than
+    // silently dropping them — callers render `workingHours[day] || closed` defensively.
+    const input = { monday: null, tuesday: 9 };
+    expect(parseWorkingHours(input)).toEqual(input);
+  });
 });
 
 describe("buildWhatsAppHref", () => {

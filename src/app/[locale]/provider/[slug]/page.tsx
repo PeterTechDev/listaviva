@@ -58,12 +58,15 @@ export async function generateMetadata({
     .eq("status", "active")
     .single();
 
-  if (metaError && metaError.code !== "PGRST116") {
-    console.error("[provider-page] generateMetadata Supabase error", {
-      slug,
-      code: metaError.code,
-      message: metaError.message,
-    });
+  if (metaError) {
+    if (metaError.code !== "PGRST116") {
+      console.error("[provider-page] generateMetadata Supabase error", {
+        slug,
+        code: metaError.code,
+        message: metaError.message,
+      });
+    }
+    return {};
   }
 
   if (!provider) return {};
