@@ -1,0 +1,58 @@
+{
+  "common": {
+    "appName": "Listaviva",
+    "tagline": "Find local services in Linhares",
+    "search": "Search",
+    "searchPlaceholder": "What do you need? E.g.: electrician, hairdresser...",
+    "categories": "Categories",
+    "allCategories": "All categories",
+    "providers": "Providers",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "language": "Language",
+    "switchLanguage": "Português",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "error": "Something went wrong",
+    "back": "Back"
+  },
+  "home": {
+    "hero": "Discover the best local services in Linhares",
+    "subtitle": "We connect you to service providers in your area. From electricians to hairdressers, find everything here.",
+    "ctaSearch": "Search services",
+    "ctaBrowse": "Browse categories",
+    "featuredCategories": "Popular categories",
+    "howItWorks": "How it works",
+    "step1Title": "Search",
+    "step1Desc": "Type what you need or browse by category",
+    "step2Title": "Find",
+    "step2Desc": "See full profiles with photos, reviews, and location",
+    "step3Title": "Contact",
+    "step3Desc": "Reach the provider directly via WhatsApp"
+  },
+  "provider": {
+    "services": "Services",
+    "serviceArea": "Service area",
+    "hours": "Working hours",
+    "photos": "Photos",
+    "contactWhatsApp": "Contact on WhatsApp",
+    "claimListing": "Is this your business? Claim your profile",
+    "recommend": "Recommend a provider"
+  },
+  "auth": {
+    "loginTitle": "Sign in to Listaviva",
+    "loginWithGoogle": "Sign in with Google",
+    "loginWithWhatsApp": "Sign in with WhatsApp",
+    "signupProvider": "I want to list my services",
+    "profile": "My profile"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "listings": "Providers",
+    "categories": "Categories",
+    "bairros": "Neighborhoods",
+    "users": "Users",
+    "recommendations": "Recommendations",
+    "analytics": "Analytics"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "common": {
+    "appName": "Listaviva",
+    "tagline": "Encontre serviços locais em Linhares",
+    "search": "Buscar",
+    "searchPlaceholder": "O que você precisa? Ex: eletricista, cabeleireiro...",
+    "categories": "Categorias",
+    "allCategories": "Todas as categorias",
+    "providers": "Prestadores",
+    "login": "Entrar",
+    "logout": "Sair",
+    "language": "Idioma",
+    "switchLanguage": "English",
+    "loading": "Carregando...",
+    "noResults": "Nenhum resultado encontrado",
+    "error": "Algo deu errado",
+    "back": "Voltar"
+  },
+  "home": {
+    "hero": "Descubra os melhores serviços locais em Linhares",
+    "subtitle": "Conectamos você aos prestadores de serviço da sua região. Do eletricista à cabeleireira, encontre tudo aqui.",
+    "ctaSearch": "Buscar serviços",
+    "ctaBrowse": "Explorar categorias",
+    "featuredCategories": "Categorias populares",
+    "howItWorks": "Como funciona",
+    "step1Title": "Busque",
+    "step1Desc": "Digite o que você precisa ou navegue pelas categorias",
+    "step2Title": "Encontre",
+    "step2Desc": "Veja perfis completos com fotos, avaliações e localização",
+    "step3Title": "Contate",
+    "step3Desc": "Fale direto pelo WhatsApp com o prestador"
+  },
+  "provider": {
+    "services": "Serviços",
+    "serviceArea": "Área de atendimento",
+    "hours": "Horário de funcionamento",
+    "photos": "Fotos",
+    "contactWhatsApp": "Chamar no WhatsApp",
+    "claimListing": "Este é seu negócio? Reivindique seu perfil",
+    "recommend": "Recomendar um prestador"
+  },
+  "auth": {
+    "loginTitle": "Entrar no Listaviva",
+    "loginWithGoogle": "Entrar com Google",
+    "loginWithWhatsApp": "Entrar com WhatsApp",
+    "signupProvider": "Quero cadastrar meus serviços",
+    "profile": "Meu perfil"
+  },
+  "admin": {
+    "dashboard": "Painel",
+    "listings": "Prestadores",
+    "categories": "Categorias",
+    "bairros": "Bairros",
+    "users": "Usuários",
+    "recommendations": "Indicações",
+    "analytics": "Dados"
+  }
+}
