@@ -137,7 +137,8 @@
     "thu": "Thursday",
     "fri": "Friday",
     "sat": "Saturday",
-    "sun": "Sunday"
+    "sun": "Sunday",
+    "basicInfo": "Basic information"
   },
   "catalog": {
     "browseByCategory": "Browse by category",
@@ -161,7 +162,14 @@
     "claimSubmit": "Request this listing",
     "claimSent": "Request sent! Awaiting admin approval.",
     "claimDuplicate": "You already have a pending request for this listing.",
-    "claimOwned": "This listing already has an owner."
+    "claimOwned": "This listing already has an owner.",
+    "statusActive": "Active",
+    "viewPublicProfile": "View public profile →",
+    "createListingDesc": "Create a new profile for your business",
+    "claimListingDesc": "Claim an existing listing",
+    "recommendCardDesc": "Recommend a new provider",
+    "claimSearchButton": "Search",
+    "claimNoResults": "No results found"
   },
   "adminClaims": {
     "title": "Claim Requests",
