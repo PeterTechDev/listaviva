@@ -12,7 +12,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className="w-full bg-accent text-white py-2 px-4 rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
     >
       {pending ? "..." : t("submit")}
     </button>
@@ -21,6 +21,10 @@ function SubmitButton() {
 
 type Category = { id: string; name_pt: string };
 type Bairro = { id: string; name: string };
+
+const inputClass =
+  "w-full border border-border rounded-lg px-3 py-2 bg-background text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent";
+const labelClass = "block text-sm font-medium text-primary mb-1";
 
 export default function RecommendForm({
   categories,
@@ -39,22 +43,22 @@ export default function RecommendForm({
       )}
 
       <div>
-        <label className="block text-sm font-medium mb-1">{t("providerName")} *</label>
+        <label className={labelClass}>{t("providerName")} *</label>
         <input
           name="provider_name"
           type="text"
           required
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={inputClass}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">{t("category")}</label>
+        <label className={labelClass}>{t("category")}</label>
         <select
           name="category_id"
           required
           defaultValue=""
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={inputClass}
         >
           <option value="" disabled>—</option>
           {categories.map((cat) => (
@@ -66,19 +70,19 @@ export default function RecommendForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">{t("whatsapp")}</label>
+        <label className={labelClass}>{t("whatsapp")}</label>
         <input
           name="whatsapp"
           type="text"
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={inputClass}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">{t("bairro")}</label>
+        <label className={labelClass}>{t("bairro")}</label>
         <select
           name="bairro_id"
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={inputClass}
         >
           <option value="">—</option>
           {bairros.map((b) => (
@@ -90,11 +94,11 @@ export default function RecommendForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">{t("description")}</label>
+        <label className={labelClass}>{t("description")}</label>
         <textarea
           name="description"
           rows={3}
-          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={inputClass}
         />
       </div>
 
