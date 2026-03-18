@@ -44,7 +44,7 @@ export async function getProvidersByCategory(supabase: SupabaseClient): Promise<
   if (error || !data) return [];
   const counts: Record<string, number> = {};
   for (const row of data) {
-    const name = (row.categories as { name_pt: string } | null)?.name_pt;
+    const name = (row.categories as unknown as { name_pt: string } | null)?.name_pt;
     if (name) counts[name] = (counts[name] ?? 0) + 1;
   }
   return Object.entries(counts)
@@ -60,7 +60,7 @@ export async function getProvidersByBairro(supabase: SupabaseClient): Promise<Ba
   if (error || !data) return [];
   const counts: Record<string, number> = {};
   for (const row of data) {
-    const name = (row.bairros as { name: string } | null)?.name;
+    const name = (row.bairros as unknown as { name: string } | null)?.name;
     if (name) counts[name] = (counts[name] ?? 0) + 1;
   }
   return Object.entries(counts)
