@@ -11,42 +11,49 @@ interface Bairro {
 export default function BairroFilter({
   bairros,
   currentBairro,
-  filterLabel,
   allLabel,
 }: {
   bairros: Bairro[];
   currentBairro: string;
-  filterLabel: string;
+  filterLabel: string; // kept for interface compat, not rendered
   allLabel: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  function handleChange(value: string) {
-    if (value) {
-      router.push(`${pathname}?bairro=${value}`);
+  function handleSelect(slug: string) {
+    if (slug) {
+      router.push(`${pathname}?bairro=${slug}`);
     } else {
       router.push(pathname);
     }
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-sm text-gray-500 whitespace-nowrap">
-        {filterLabel}:
-      </label>
-      <select
-        value={currentBairro}
-        onChange={(e) => handleChange(e.target.value)}
-        className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+    <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-none">
+      <button
+        onClick={() => handleSelect("")}
+        className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+          !currentBairro
+            ? "bg-accent text-white"
+            : "bg-surface border border-border text-muted hover:border-accent hover:text-accent"
+        }`}
       >
-        <option value="">{allLabel}</option>
-        {bairros.map((b) => (
-          <option key={b.id} value={b.slug}>
-            {b.name}
-          </option>
-        ))}
-      </select>
+        {allLabel}
+      </button>
+      {bairros.map((b) => (
+        <button
+          key={b.id}
+          onClick={() => handleSelect(b.slug)}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            currentBairro === b.slug
+              ? "bg-accent text-white"
+              : "bg-surface border border-border text-muted hover:border-accent hover:text-accent"
+          }`}
+        >
+          {b.name}
+        </button>
+      ))}
     </div>
   );
 }

@@ -35,4 +35,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Utilities ──────────────────────────────────────────────────────────── */
+
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
 
