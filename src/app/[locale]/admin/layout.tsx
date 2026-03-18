@@ -18,6 +18,7 @@ export default async function AdminLayout({
     { href: "/admin/categories" as const, label: t("admin.categories"), icon: "📂" },
     { href: "/admin/providers" as const, label: t("admin.listings"), icon: "👤" },
     { href: "/admin/claims" as const, label: t("admin.claims"), icon: "📋" },
+    { href: "/admin/recommendations" as const, label: t("admin.recommendations"), icon: "💡" },
   ];
 
   return (
