@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { toSlug } from "@/lib/slug";
+import { buildProviderText, embedText } from "@/lib/embeddings";
 
 export type WorkingHours = {
   [day in "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"]?: string;
@@ -76,6 +77,29 @@ export async function createProvider(formData: FormData) {
     );
   }
 
+  try {
+    const { data: cats } = await supabase
+      .from("provider_categories")
+      .select("categories(name_pt)")
+      .eq("provider_id", providerId);
+    const catNames = (cats ?? []).flatMap((c) => {
+      const cat = c.categories;
+      return Array.isArray(cat)
+        ? cat.map((x) => x.name_pt)
+        : cat
+        ? [(cat as { name_pt: string }).name_pt]
+        : [];
+    });
+    const text = buildProviderText(name, description_pt ?? null, catNames);
+    const embedding = await embedText(text);
+    await supabase
+      .from("providers")
+      .update({ embedding: JSON.stringify(embedding) })
+      .eq("id", providerId);
+  } catch {
+    // non-blocking
+  }
+
   revalidatePath("/[locale]/admin/providers", "page");
   revalidatePath("/[locale]/category/[slug]", "page");
   return { success: true, id: providerId };
@@ -147,6 +171,29 @@ export async function updateProvider(id: string, formData: FormData) {
     await supabase.from("provider_photos").insert(
       photo_urls.map((url, i) => ({ provider_id: id, url, sort_order: i }))
     );
+  }
+
+  try {
+    const { data: cats } = await supabase
+      .from("provider_categories")
+      .select("categories(name_pt)")
+      .eq("provider_id", id);
+    const catNames = (cats ?? []).flatMap((c) => {
+      const cat = c.categories;
+      return Array.isArray(cat)
+        ? cat.map((x) => x.name_pt)
+        : cat
+        ? [(cat as { name_pt: string }).name_pt]
+        : [];
+    });
+    const text = buildProviderText(name, description_pt ?? null, catNames);
+    const embedding = await embedText(text);
+    await supabase
+      .from("providers")
+      .update({ embedding: JSON.stringify(embedding) })
+      .eq("id", id);
+  } catch {
+    // non-blocking
   }
 
   revalidatePath("/[locale]/admin/providers", "page");
