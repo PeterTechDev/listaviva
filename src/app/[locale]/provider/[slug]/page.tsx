@@ -264,11 +264,11 @@ export default async function ProviderPage({
         </div>
       </footer>
 
-      {/* Sticky WhatsApp CTA — mobile only, sits above BottomNav */}
+      {/* Sticky WhatsApp CTA — mobile only. Positioned above BottomNav via bottom offset (BottomNav is z-50, this is z-10). */}
       {whatsappHref && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-10 md:hidden bg-background/95 backdrop-blur-sm border-t border-border px-4 pt-3"
-          style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+          className="fixed left-0 right-0 z-10 md:hidden bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3"
+          style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
         >
           <a
             href={whatsappHref}
