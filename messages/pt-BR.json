@@ -198,6 +198,12 @@
     "allBairros": "Todos os bairros",
     "tryWithout": "Tente sem filtro de bairro"
   },
+  "nav": {
+    "home": "Início",
+    "search": "Busca",
+    "categories": "Categorias",
+    "account": "Conta"
+  },
   "dashboard": {
     "title": "Dashboard",
     "overview": "Visão geral",
