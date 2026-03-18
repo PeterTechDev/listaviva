@@ -21,16 +21,22 @@ export default async function DashboardPage({
 
   const supabase = await createClient();
 
-  const [stats, pendingActions, byCategory, byBairro, topQueries, zeroQueries, supplyDemand] =
-    await Promise.all([
-      getProviderStats(supabase),
-      getPendingActions(supabase),
-      getProvidersByCategory(supabase),
-      getProvidersByBairro(supabase),
-      getTopQueries(supabase),
-      getZeroResultQueries(supabase),
-      getSupplyDemand(supabase),
-    ]);
+  let stats, pendingActions, byCategory, byBairro, topQueries, zeroQueries, supplyDemand;
+  try {
+    [stats, pendingActions, byCategory, byBairro, topQueries, zeroQueries, supplyDemand] =
+      await Promise.all([
+        getProviderStats(supabase),
+        getPendingActions(supabase),
+        getProvidersByCategory(supabase),
+        getProvidersByBairro(supabase),
+        getTopQueries(supabase),
+        getZeroResultQueries(supabase),
+        getSupplyDemand(supabase),
+      ]);
+  } catch (err) {
+    console.error("[dashboard] Failed to load dashboard data", err);
+    throw err;
+  }
 
   return (
     <DashboardClient

@@ -60,8 +60,8 @@ export default function DashboardClient({
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   const totalSearches =
-    topQueries.reduce((s, r) => s + Number(r.search_count), 0) +
-    zeroQueries.reduce((s, r) => s + Number(r.search_count), 0);
+    topQueries.reduce((s, r) => s + r.search_count, 0) +
+    zeroQueries.reduce((s, r) => s + r.search_count, 0);
 
   const statValues = {
     activeProviders: stats.active,
@@ -98,7 +98,9 @@ export default function DashboardClient({
           <button
             key={tab.id}
             role="tab"
+            id={`tab-${tab.id}`}
             aria-selected={activeTab === tab.id}
+            aria-controls={`tabpanel-${tab.id}`}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
               activeTab === tab.id
@@ -113,7 +115,7 @@ export default function DashboardClient({
 
       {/* ── Tab: Overview ─────────────────────────────────────────── */}
       {activeTab === "overview" && (
-        <div role="tabpanel" className="space-y-5">
+        <div role="tabpanel" id="tabpanel-overview" aria-labelledby="tab-overview" className="space-y-5">
           {/* Stat cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {STAT_CARDS.map(({ key, color, icon }) => {
@@ -178,7 +180,7 @@ export default function DashboardClient({
 
       {/* ── Tab: Search Analytics ──────────────────────────────────── */}
       {activeTab === "search" && (
-        <div role="tabpanel" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div role="tabpanel" id="tabpanel-search" aria-labelledby="tab-search" className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DataCard title={t("topQueries")}>
             {topQueries.length === 0 ? (
               <EmptyState label={t("noData")} />
@@ -198,8 +200,8 @@ export default function DashboardClient({
                         <span className="text-xs text-gray-300 font-mono w-4">{i + 1}</span>
                         <span className="font-medium text-gray-800">{row.query_text}</span>
                       </td>
-                      <td className="py-2.5 text-right tabular-nums text-gray-600">{Number(row.search_count)}</td>
-                      <td className="py-2.5 text-right tabular-nums text-gray-500">{Number(row.avg_results).toFixed(1)}</td>
+                      <td className="py-2.5 text-right tabular-nums text-gray-600">{row.search_count}</td>
+                      <td className="py-2.5 text-right tabular-nums text-gray-500">{row.avg_results.toFixed(1)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -227,7 +229,7 @@ export default function DashboardClient({
                       </td>
                       <td className="py-2.5 text-right tabular-nums">
                         <span className="bg-rose-50 text-rose-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-                          {Number(row.search_count)}
+                          {row.search_count}
                         </span>
                       </td>
                     </tr>
@@ -241,7 +243,7 @@ export default function DashboardClient({
 
       {/* ── Tab: Supply & Demand ───────────────────────────────────── */}
       {activeTab === "supply" && (
-        <div role="tabpanel">
+        <div role="tabpanel" id="tabpanel-supply" aria-labelledby="tab-supply">
           <DataCard title={t("supplyDemand")}>
             {supplyDemand.length === 0 ? (
               <EmptyState label={t("noData")} />
@@ -255,7 +257,7 @@ export default function DashboardClient({
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {supplyDemand.map((row) => {
-                    const count = Number(row.provider_count);
+                    const count = row.provider_count;
                     const isEmpty = count === 0;
                     return (
                       <tr key={row.name_pt} className="hover:bg-gray-50 transition-colors">
