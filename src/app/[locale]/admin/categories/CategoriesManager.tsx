@@ -28,6 +28,86 @@ const emptyForm = {
   sort_order: "0",
 };
 
+const inputClass =
+  "w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500";
+
+function FormFields({
+  form,
+  onChange,
+  labels,
+}: {
+  form: typeof emptyForm;
+  onChange: (field: string, value: string) => void;
+  labels: {
+    namePt: string;
+    nameEn: string;
+    icon: string;
+    sortOrder: string;
+    slug: string;
+  };
+}) {
+  return (
+    <div className="grid grid-cols-6 gap-3">
+      <div className="col-span-2">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          {labels.namePt}
+        </label>
+        <input
+          type="text"
+          value={form.name_pt}
+          onChange={(e) => onChange("name_pt", e.target.value)}
+          className={inputClass}
+        />
+      </div>
+      <div className="col-span-2">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          {labels.nameEn}
+        </label>
+        <input
+          type="text"
+          value={form.name_en}
+          onChange={(e) => onChange("name_en", e.target.value)}
+          className={inputClass}
+        />
+      </div>
+      <div className="col-span-1">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          {labels.icon}
+        </label>
+        <input
+          type="text"
+          value={form.icon}
+          onChange={(e) => onChange("icon", e.target.value)}
+          className={inputClass}
+          maxLength={4}
+        />
+      </div>
+      <div className="col-span-1">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          {labels.sortOrder}
+        </label>
+        <input
+          type="number"
+          value={form.sort_order}
+          onChange={(e) => onChange("sort_order", e.target.value)}
+          className={inputClass}
+        />
+      </div>
+      <div className="col-span-6">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          {labels.slug}
+        </label>
+        <input
+          type="text"
+          value={form.slug}
+          onChange={(e) => onChange("slug", e.target.value)}
+          className={`${inputClass} font-mono`}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function CategoriesManager({
   categories,
 }: {
@@ -41,6 +121,14 @@ export default function CategoriesManager({
 
   const [addForm, setAddForm] = useState(emptyForm);
   const [editForm, setEditForm] = useState(emptyForm);
+
+  const fieldLabels = {
+    namePt: t("namePt"),
+    nameEn: t("nameEn"),
+    icon: t("icon"),
+    sortOrder: t("sortOrder"),
+    slug: t("slug"),
+  };
 
   function handleEditStart(c: Category) {
     setEditId(c.id);
@@ -113,78 +201,6 @@ export default function CategoriesManager({
     });
   }
 
-  const inputClass =
-    "w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500";
-
-  function FormFields({
-    form,
-    onChange,
-  }: {
-    form: typeof emptyForm;
-    onChange: (field: string, value: string) => void;
-  }) {
-    return (
-      <div className="grid grid-cols-6 gap-3">
-        <div className="col-span-2">
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            {t("namePt")}
-          </label>
-          <input
-            type="text"
-            value={form.name_pt}
-            onChange={(e) => onChange("name_pt", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div className="col-span-2">
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            {t("nameEn")}
-          </label>
-          <input
-            type="text"
-            value={form.name_en}
-            onChange={(e) => onChange("name_en", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div className="col-span-1">
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            {t("icon")}
-          </label>
-          <input
-            type="text"
-            value={form.icon}
-            onChange={(e) => onChange("icon", e.target.value)}
-            className={inputClass}
-            maxLength={4}
-          />
-        </div>
-        <div className="col-span-1">
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            {t("sortOrder")}
-          </label>
-          <input
-            type="number"
-            value={form.sort_order}
-            onChange={(e) => onChange("sort_order", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div className="col-span-6">
-          <label className="block text-xs font-medium text-gray-600 mb-1">
-            {t("slug")}
-          </label>
-          <input
-            type="text"
-            value={form.slug}
-            onChange={(e) => onChange("slug", e.target.value)}
-            className={`${inputClass} font-mono`}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -214,6 +230,7 @@ export default function CategoriesManager({
           <h3 className="font-semibold text-gray-800 mb-4">{t("addCategory")}</h3>
           <FormFields
             form={addForm}
+            labels={fieldLabels}
             onChange={(field, value) => {
               if (field === "name_pt") {
                 handleAddNamePt(value);
@@ -277,6 +294,7 @@ export default function CategoriesManager({
                     <td colSpan={5} className="px-4 py-3">
                       <FormFields
                         form={editForm}
+                        labels={fieldLabels}
                         onChange={(field, value) =>
                           setEditForm((f) => ({ ...f, [field]: value }))
                         }

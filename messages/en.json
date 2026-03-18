@@ -198,6 +198,12 @@
     "allBairros": "All neighborhoods",
     "tryWithout": "Try without neighborhood filter"
   },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "categories": "Categories",
+    "account": "Account"
+  },
   "dashboard": {
     "title": "Dashboard",
     "overview": "Overview",
