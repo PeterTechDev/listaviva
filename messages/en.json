@@ -173,6 +173,22 @@
     "message": "Message",
     "createdAt": "Date"
   },
+  "recommendations": {
+    "recommend": "Recommend a provider",
+    "recommendDesc": "Know a good provider? Recommend them here.",
+    "providerName": "Provider name",
+    "category": "Category",
+    "whatsapp": "WhatsApp",
+    "bairro": "Neighborhood",
+    "description": "Description (optional)",
+    "submit": "Submit recommendation",
+    "title": "Recommendations",
+    "empty": "No pending recommendations",
+    "approve": "Approve",
+    "reject": "Reject",
+    "submitter": "Submitted by",
+    "date": "Date"
+  },
   "search": {
     "title": "Search",
     "noResults": "No providers found",

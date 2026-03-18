@@ -173,6 +173,22 @@
     "message": "Mensagem",
     "createdAt": "Data"
   },
+  "recommendations": {
+    "recommend": "Recomendar prestador",
+    "recommendDesc": "Conhece um bom prestador? Indique-o aqui.",
+    "providerName": "Nome do prestador",
+    "category": "Categoria",
+    "whatsapp": "WhatsApp",
+    "bairro": "Bairro",
+    "description": "Descrição (opcional)",
+    "submit": "Enviar indicação",
+    "title": "Indicações",
+    "empty": "Nenhuma indicação pendente",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "submitter": "Enviado por",
+    "date": "Data"
+  },
   "search": {
     "title": "Busca",
     "noResults": "Nenhum prestador encontrado",
