@@ -223,6 +223,23 @@ function CategoryPageLayout({
           />
         </div>
 
+        {/* Compact search bar */}
+        <form method="GET" action={`/${locale}/search`} className="mb-6">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              name="q"
+              placeholder={t("common.searchPlaceholder")}
+              className="flex-1 h-10 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+            />
+            <button
+              type="submit"
+              className="h-10 px-4 bg-emerald-500 text-white rounded-xl text-sm font-medium hover:bg-emerald-600 transition-colors"
+            >
+              {t("common.search")}
+            </button>
+          </div>
+        </form>
         {children}
       </main>
 

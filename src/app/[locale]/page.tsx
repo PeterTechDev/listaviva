@@ -34,16 +34,22 @@ export default async function HomePage({
 
           {/* Search bar */}
           <div className="mt-8 max-w-xl mx-auto">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={t("common.searchPlaceholder")}
-                className="w-full h-12 pl-4 pr-12 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm"
-              />
-              <button className="absolute right-2 top-2 h-8 px-4 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors">
-                {t("common.search")}
-              </button>
-            </div>
+            <form method="GET" action={`/${locale}/search`}>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="q"
+                  placeholder={t("common.searchPlaceholder")}
+                  className="w-full h-12 pl-4 pr-12 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 top-2 h-8 px-4 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
+                >
+                  {t("common.search")}
+                </button>
+              </div>
+            </form>
           </div>
         </section>
 
