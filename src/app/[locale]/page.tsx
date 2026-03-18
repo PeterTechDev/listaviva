@@ -1,17 +1,29 @@
-"use client";
-
-import { useTranslations } from "next-intl";
+import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { Header } from "@/components/header";
 
-export default function HomePage() {
-  const t = useTranslations();
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale });
+
+  const supabase = await createClient();
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("id, name_pt, name_en, slug, icon")
+    .order("sort_order")
+    .limit(12);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* Hero */}
       <main className="flex-1">
+        {/* Hero */}
         <section className="max-w-5xl mx-auto px-4 pt-16 pb-12 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
             {t("home.hero")}
@@ -33,17 +45,32 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-
-          {/* CTA buttons */}
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-            <button className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-colors shadow-sm">
-              {t("home.ctaSearch")}
-            </button>
-            <button className="px-6 py-3 bg-white text-emerald-600 border border-emerald-200 rounded-xl font-medium hover:bg-emerald-50 transition-colors">
-              {t("home.ctaBrowse")}
-            </button>
-          </div>
         </section>
+
+        {/* Category grid */}
+        {categories && categories.length > 0 && (
+          <section className="max-w-5xl mx-auto px-4 pb-16">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">
+              {t("home.featuredCategories")}
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/category/${cat.slug}`}
+                  className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-sm transition-all group"
+                >
+                  {cat.icon && (
+                    <span className="text-2xl flex-shrink-0">{cat.icon}</span>
+                  )}
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 transition-colors">
+                    {locale === "en" ? (cat.name_en ?? cat.name_pt) : cat.name_pt}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* How it works */}
         <section className="bg-gray-50 py-16">
@@ -84,7 +111,6 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-gray-100 py-8">
         <div className="max-w-5xl mx-auto px-4 text-center text-sm text-gray-400">
           {t("common.appName")} &mdash; {t("common.tagline")}
