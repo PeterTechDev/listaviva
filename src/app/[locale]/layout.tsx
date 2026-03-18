@@ -4,6 +4,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Fraunces, DM_Sans } from "next/font/google";
+import { BottomNav } from "@/components/bottom-nav";
 import "../globals.css";
 
 const fraunces = Fraunces({
@@ -55,7 +56,10 @@ export default async function LocaleLayout({
       </head>
       <body className="font-sans bg-background text-primary antialiased">
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <div className="pb-20">
+            {children}
+          </div>
+          <BottomNav />
         </NextIntlClientProvider>
       </body>
     </html>
