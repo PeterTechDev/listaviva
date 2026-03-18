@@ -4,7 +4,6 @@ import { useState, useTransition, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { createProvider, updateProvider } from "./actions";
 import { toSlug } from "@/lib/slug";
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
@@ -46,6 +45,9 @@ interface ProviderFormProps {
   categories: Category[];
   initialData?: ProviderData;
   mode: "create" | "edit";
+  action: (formData: FormData) => Promise<{ error?: string } | unknown>;
+  redirectTo: string;
+  selfService?: boolean;
 }
 
 export default function ProviderForm({
@@ -53,6 +55,9 @@ export default function ProviderForm({
   categories,
   initialData = {},
   mode,
+  action,
+  redirectTo,
+  selfService = false,
 }: ProviderFormProps) {
   const t = useTranslations("adminProviders");
   const locale = useLocale();
@@ -143,17 +148,12 @@ export default function ProviderForm({
 
   function handleSubmit() {
     startTransition(async () => {
-      const fd = buildFormData();
-      const result =
-        mode === "create"
-          ? await createProvider(fd)
-          : await updateProvider(initialData.id!, fd);
-
-      if ("error" in result && result.error) {
-        setError(result.error);
+      const result = await action(buildFormData());
+      if (result && typeof result === "object" && "error" in result && (result as { error?: string }).error) {
+        setError((result as { error?: string }).error!);
         return;
       }
-      router.push("/admin/providers");
+      router.push(redirectTo);
     });
   }
 
@@ -234,7 +234,7 @@ export default function ProviderForm({
             />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        {selfService && (
           <div>
             <label className={labelClass}>{t("homeBairro")}</label>
             <select
@@ -250,30 +250,49 @@ export default function ProviderForm({
               ))}
             </select>
           </div>
-          <div>
-            <label className={labelClass}>{t("status")}</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className={inputClass}
-            >
-              <option value="active">{t("statusActive")}</option>
-              <option value="pending">{t("statusPending")}</option>
-              <option value="inactive">{t("statusInactive")}</option>
-            </select>
+        )}
+        {!selfService && (
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass}>{t("homeBairro")}</label>
+              <select
+                value={homeBairroId}
+                onChange={(e) => setHomeBairroId(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">—</option>
+                {bairros.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>{t("status")}</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className={inputClass}
+              >
+                <option value="active">{t("statusActive")}</option>
+                <option value="pending">{t("statusPending")}</option>
+                <option value="inactive">{t("statusInactive")}</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>{t("tier")}</label>
+              <select
+                value={tier}
+                onChange={(e) => setTier(e.target.value)}
+                className={inputClass}
+              >
+                <option value="free">{t("tierFree")}</option>
+                <option value="premium">{t("tierPremium")}</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>{t("tier")}</label>
-            <select
-              value={tier}
-              onChange={(e) => setTier(e.target.value)}
-              className={inputClass}
-            >
-              <option value="free">{t("tierFree")}</option>
-              <option value="premium">{t("tierPremium")}</option>
-            </select>
-          </div>
-        </div>
+        )}
       </section>
 
       {/* Categories */}
@@ -409,7 +428,7 @@ export default function ProviderForm({
           {isPending ? t("uploadingPhoto") : t("save")}
         </button>
         <button
-          onClick={() => router.push("/admin/providers")}
+          onClick={() => router.push(redirectTo)}
           className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
         >
           {t("cancel")}

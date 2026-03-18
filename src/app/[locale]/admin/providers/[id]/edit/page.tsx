@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
 import ProviderForm from "../../ProviderForm";
+import { updateProvider } from "../../actions";
 
 export default async function EditProviderPage({
   params,
@@ -84,6 +85,8 @@ export default async function EditProviderPage({
         categories={categories ?? []}
         initialData={initialData}
         mode="edit"
+        action={(fd) => updateProvider(provider.id, fd)}
+        redirectTo="/admin/providers"
       />
     </div>
   );

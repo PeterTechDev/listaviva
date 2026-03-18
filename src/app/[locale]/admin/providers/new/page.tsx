@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import ProviderForm from "../ProviderForm";
+import { createProvider } from "../actions";
 
 export default async function NewProviderPage({
   params,
@@ -35,7 +36,10 @@ export default async function NewProviderPage({
       <ProviderForm
         bairros={bairros ?? []}
         categories={categories ?? []}
+        initialData={{}}
         mode="create"
+        action={createProvider}
+        redirectTo="/admin/providers"
       />
     </div>
   );
