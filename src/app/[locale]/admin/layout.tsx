@@ -14,6 +14,7 @@ export default async function AdminLayout({
   const user = await getCurrentUser();
 
   const navItems = [
+    { href: "/admin/dashboard" as const, label: t("admin.dashboard"), icon: "📊" },
     { href: "/admin/bairros" as const, label: t("admin.bairros"), icon: "🏘" },
     { href: "/admin/categories" as const, label: t("admin.categories"), icon: "📂" },
     { href: "/admin/providers" as const, label: t("admin.listings"), icon: "👤" },
