@@ -7,6 +7,12 @@ import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import PhotoGallery from "./PhotoGallery";
 import type { Metadata } from "next";
 
+const SECTION_HEADING =
+  "text-sm font-semibold text-muted uppercase tracking-wider mb-2";
+
+const WHATSAPP_BASE =
+  "items-center gap-2 bg-whatsapp text-white rounded-xl font-medium hover:opacity-90 transition-opacity";
+
 const DAYS = [
   "monday",
   "tuesday",
@@ -162,7 +168,7 @@ export default async function ProviderPage({
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-whatsapp text-white rounded-xl font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+                className={`hidden md:inline-flex ${WHATSAPP_BASE} px-4 py-2 whitespace-nowrap`}
               >
                 <WhatsAppIcon size={18} />
                 {t("provider.contactWhatsApp")}
@@ -180,7 +186,7 @@ export default async function ProviderPage({
           {/* Categories */}
           {categories.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">
+              <h2 className={SECTION_HEADING}>
                 {t("provider.categories")}
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -201,7 +207,7 @@ export default async function ProviderPage({
           {/* Service areas */}
           {serviceAreas.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">
+              <h2 className={SECTION_HEADING}>
                 {t("provider.serviceAreas")}
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -220,7 +226,7 @@ export default async function ProviderPage({
           {/* Working hours */}
           {Object.keys(workingHours).length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">
+              <h2 className={SECTION_HEADING}>
                 {t("provider.workingHours")}
               </h2>
               <div className="bg-surface rounded-xl overflow-hidden border border-border">
@@ -248,7 +254,7 @@ export default async function ProviderPage({
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-whatsapp text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
+                className={`w-full flex justify-center ${WHATSAPP_BASE} px-4 py-3`}
               >
                 <WhatsAppIcon size={18} />
                 {t("provider.contactWhatsApp")}
@@ -274,7 +280,7 @@ export default async function ProviderPage({
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-whatsapp text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
+            className={`w-full flex justify-center ${WHATSAPP_BASE} px-4 py-3`}
           >
             <WhatsAppIcon size={18} />
             {t("provider.contactWhatsApp")}
