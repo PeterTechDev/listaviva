@@ -4,8 +4,9 @@
 
 @theme {
   /* Fonts — wire up the CSS variables injected by next/font/google in layout.tsx */
-  --font-serif: var(--font-fraunces), Georgia, serif;
-  --font-sans:  var(--font-dm-sans), system-ui, sans-serif;
+  --font-serif:   var(--font-fraunces), Georgia, serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans:    var(--font-dm-sans), system-ui, sans-serif;
 
   /* Background & Surface */
   --color-background: #FAF6EF;
@@ -39,7 +40,3 @@ body {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
-/* Display font shorthand — apply Fraunces to headings */
-.font-display {
-  font-family: var(--font-serif);
-}
