@@ -69,32 +69,36 @@ export async function searchProviders({
   if (resultIds.length === 0) return { results: [], usedFallback };
 
   // Step 7: enrich results
-  const { data: enriched } = await supabase
-    .from("providers")
-    .select(`
-      id, name, slug, description_pt, whatsapp,
-      home_bairro:bairros(name, slug),
-      categories:provider_categories(categories(name_pt, name_en, icon))
-    `)
-    .in("id", resultIds);
+  try {
+    const { data: enriched } = await supabase
+      .from("providers")
+      .select(`
+        id, name, slug, description_pt, whatsapp,
+        home_bairro:bairros(name, slug),
+        categories:provider_categories(categories(name_pt, name_en, icon))
+      `)
+      .in("id", resultIds);
 
-  const results: ProviderSearchResult[] = (enriched ?? []).map((row: any) => ({
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    description_pt: row.description_pt,
-    whatsapp: row.whatsapp,
-    home_bairro: row.home_bairro ?? null,
-    // Flatten nested provider_categories → categories junction
-    categories: (row.categories ?? []).flatMap(
-      (pc: { categories: unknown }) =>
-        Array.isArray(pc.categories)
-          ? pc.categories
-          : pc.categories
-          ? [pc.categories]
-          : []
-    ),
-  }));
+    const results: ProviderSearchResult[] = (enriched ?? []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description_pt: row.description_pt,
+      whatsapp: row.whatsapp,
+      home_bairro: row.home_bairro ?? null,
+      // Flatten nested provider_categories → categories junction
+      categories: (row.categories ?? []).flatMap(
+        (pc: { categories: unknown }) =>
+          Array.isArray(pc.categories)
+            ? pc.categories
+            : pc.categories
+            ? [pc.categories]
+            : []
+      ),
+    }));
 
-  return { results, usedFallback };
+    return { results, usedFallback };
+  } catch {
+    return { results: [], usedFallback };
+  }
 }
