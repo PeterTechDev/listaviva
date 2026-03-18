@@ -20,6 +20,10 @@ export default function BairroFilter({
   const router = useRouter();
   const pathname = usePathname();
 
+  const pillBase = "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors";
+  const pillActive = `${pillBase} bg-accent text-white`;
+  const pillInactive = `${pillBase} bg-surface border border-border text-muted hover:border-accent hover:text-accent`;
+
   function handleSelect(slug: string) {
     if (slug) {
       router.push(`${pathname}?bairro=${slug}`);
@@ -32,11 +36,7 @@ export default function BairroFilter({
     <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-none">
       <button
         onClick={() => handleSelect("")}
-        className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-          !currentBairro
-            ? "bg-accent text-white"
-            : "bg-surface border border-border text-muted hover:border-accent hover:text-accent"
-        }`}
+        className={currentBairro ? pillInactive : pillActive}
       >
         {allLabel}
       </button>
@@ -44,11 +44,7 @@ export default function BairroFilter({
         <button
           key={b.id}
           onClick={() => handleSelect(b.slug)}
-          className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-            currentBairro === b.slug
-              ? "bg-accent text-white"
-              : "bg-surface border border-border text-muted hover:border-accent hover:text-accent"
-          }`}
+          className={currentBairro === b.slug ? pillActive : pillInactive}
         >
           {b.name}
         </button>

@@ -1,4 +1,3 @@
-// src/components/provider-card.tsx
 import { Link } from "@/i18n/navigation";
 import { WhatsAppIcon } from "@/components/whatsapp-icon";
 
