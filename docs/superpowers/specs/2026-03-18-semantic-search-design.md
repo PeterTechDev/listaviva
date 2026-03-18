@@ -85,6 +85,10 @@ Vector search uses a minimum cosine similarity of `0.30`. Results below this thr
 
 When vector search returns 0 results above the threshold (or OpenAI is unavailable), the fallback runs. The fallback has no similarity threshold — it returns whatever pg_trgm finds, ordered by text relevance score.
 
+### Default Limit
+
+`options.limit` defaults to `20` when not provided.
+
 ### EmbeddingProvider Interface
 
 ```ts
@@ -113,18 +117,22 @@ User query: "quero um eletricista no centro"
 1. embed(query) → vector[1536]          via OpenAI API
      │
      ├─ OpenAI available ──────────────► pgvector cosine similarity search
+     │                                   WHERE status = 'active'
+     │                                   AND similarity >= 0.30
      │                                   + bairroId filter (if provided)
      │                                   → ranked Provider[]
      │
      └─ OpenAI unavailable ────────────► pg_trgm full-text fallback
-     │   (any of: missing OPENAI_API_KEY,   → Provider[]
-     │    non-2xx HTTP response, thrown
-     │    exception, or 0 results above
-     │    similarity threshold 0.30)
+     │   (any of: missing OPENAI_API_KEY,   WHERE status = 'active'
+     │    non-2xx HTTP response, thrown      searches: name + description_pt
+     │    exception, or 0 results above      via to_tsvector('portuguese', ...)
+     │    similarity threshold 0.30)         → Provider[]
      │
      ▼
 4. log to search_queries (always)       query text, results count, bairro filter,
-                                        query embedding (if available)
+   using service role client            query embedding (if available), user_id
+   (bypasses RLS — search is public,    null user_id = anonymous visitor
+    logging must work for anon users)
      │
      ▼
 5. return Provider[]
@@ -147,11 +155,11 @@ Example:
 
 ### When Embeddings Are Generated
 
-- **After admin saves a listing** — `POST /api/admin/providers/[id]/embed` called inline
+- **After admin saves a listing** — `POST /api/admin/providers/[id]/embed` called inline; admin-only (protected by session role check, returns 403 if not admin)
 - **After provider self-registers** — same endpoint called automatically on save
-- **Batch backfill** — `POST /api/admin/providers/embed-all` retries all where `embedding IS NULL`
+- **Batch backfill** — `POST /api/admin/providers/embed-all`; admin-only; iterates all providers where `embedding IS NULL`, calls OpenAI for each, updates the row; returns `{ processed: n, failed: n }`
 
-Providers saved without an embedding (e.g., OpenAI unavailable) get `status: needs_embedding` and are still visible but excluded from vector search until re-embedded. They remain findable via pg_trgm fallback.
+Providers saved without an embedding (e.g., OpenAI unavailable) remain `status: active` but have `embedding IS NULL` — they are excluded from vector search until re-embedded via the batch backfill. They remain findable via pg_trgm fallback.
 
 ---
 
@@ -159,14 +167,25 @@ Providers saved without an embedding (e.g., OpenAI unavailable) get `status: nee
 
 No migration needed for the providers table — `vector(1536)` and HNSW index already defined in `001_initial_schema.sql`.
 
-One addition to `search_queries` table:
+New migration `002_search_enhancements.sql`:
 
 ```sql
+-- Store query embeddings for future intent clustering
 alter table public.search_queries
   add column query_embedding vector(1536);
+
+-- Full-text search index for pg_trgm fallback
+-- Searches name + description_pt combined
+alter table public.providers
+  add column search_text tsvector
+  generated always as (
+    to_tsvector('portuguese', coalesce(name, '') || ' ' || coalesce(description_pt, ''))
+  ) stored;
+
+create index idx_providers_search_text on public.providers using gin(search_text);
 ```
 
-This enables future clustering of search intents (50 different phrasings of "eletricista" grouped together) without reprocessing history.
+This enables future clustering of search intents without reprocessing history, and powers the pg_trgm fallback on `name` and `description_pt` in Portuguese.
 
 ---
 
