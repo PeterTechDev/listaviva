@@ -270,7 +270,7 @@ export default async function ProviderPage({
         </div>
       </footer>
 
-      {/* Sticky WhatsApp CTA — mobile only. Positioned above BottomNav via bottom offset (BottomNav is z-50, this is z-10). */}
+      {/* Sticky WhatsApp CTA — mobile only. bottom offset places it above BottomNav (h-16 + safe-area). z-10 keeps it below BottomNav (z-50) so the nav stays on top. */}
       {whatsappHref && (
         <div
           className="fixed left-0 right-0 z-10 md:hidden bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3"
