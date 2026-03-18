@@ -172,5 +172,13 @@
     "provider": "Listing",
     "message": "Message",
     "createdAt": "Date"
+  },
+  "search": {
+    "title": "Search",
+    "noResults": "No providers found",
+    "resultsFor": "Results for \"{q}\"",
+    "filterBairro": "Filter by neighborhood",
+    "allBairros": "All neighborhoods",
+    "tryWithout": "Try without neighborhood filter"
   }
 }

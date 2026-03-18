@@ -172,5 +172,13 @@
     "provider": "Anúncio",
     "message": "Mensagem",
     "createdAt": "Data"
+  },
+  "search": {
+    "title": "Busca",
+    "noResults": "Nenhum prestador encontrado",
+    "resultsFor": "Resultados para \"{q}\"",
+    "filterBairro": "Filtrar por bairro",
+    "allBairros": "Todos os bairros",
+    "tryWithout": "Tente sem filtro de bairro"
   }
 }
