@@ -1,261 +1,257 @@
-# Semantic Search Design — Listaviva
-**Date:** 2026-03-18
-**Issue:** #10 — Semantic search with embeddings + pgvector
-**Status:** Approved
+# Semantic Search — Design
 
----
+**Issue:** #10
 
-## Context
+## Goal
 
-Listaviva is a hyperlocal service catalog for Linhares, ES (Brazil). Consumers search in Portuguese natural language (e.g., "preciso de alguém pra consertar meu chuveiro") and need to find relevant providers even when their words don't match category names exactly.
+Add AI-powered semantic search to Listaviva. A consumer types a natural-language query ("preciso de alguém pra consertar meu chuveiro") and sees ranked provider results. All queries are logged; zero-result queries are flagged for admin market-gap analysis.
 
-**Priorities driving this design:**
-1. Best Portuguese language quality
-2. Lowest cost (bootstrap project)
-3. Portfolio-worthy — showcases clean abstraction, pgvector-native architecture, and data intelligence
+## Architecture
 
----
+A dedicated `/[locale]/search` Server Component page receives `q` and `bairro_id` as URL params. The page calls `searchProviders()` in `src/lib/search.ts`, which embeds the query via OpenAI, runs pgvector cosine similarity, falls back to trigram full-text search on zero results, logs the query, and returns ranked providers. Embeddings for providers are generated inline on create/update in both admin and self-service actions, and a batch route handles existing providers.
 
-## Decision: What We're NOT Building
+**Tech Stack:** Next.js 16 App Router, Supabase pgvector (already provisioned), OpenAI `text-embedding-3-small` (key already in `.env.local`), Vitest for tests.
 
-- No hybrid BM25 + RRF + LLM reranking stack — marginal quality gain at Listaviva's scale (100–500 providers at launch), high complexity cost
-- No QMD (local GGUF model tool) in production — incompatible with Vercel serverless runtime
-- No separate vector database — pgvector natively in Supabase is sufficient and simpler
+## Data Model
 
----
+No schema changes to existing tables. The initial migration already provides:
 
-## Embedding Provider
+- `providers.embedding vector(1536)` with HNSW cosine index
+- `search_queries(id, query_text, results_count, user_id, bairro_filter_id, created_at)` with zero-results partial index
+- `vector` and `pg_trgm` extensions installed
 
-**Choice:** OpenAI `text-embedding-3-small`
+New migration `003_search_rpc.sql` adds the `match_providers` RPC function only.
 
-| Criterion | Result |
-|-----------|--------|
-| Portuguese quality | Excellent (multilingual by design) |
-| Cost | $0.02 / 1M tokens — negligible at launch scale |
-| Dimensions | 1536 — matches existing schema (no migration needed) |
-| Swappability | Hidden behind `EmbeddingProvider` interface |
+## File Map
 
-The provider is a detail, not the story. The `EmbeddingProvider` interface makes it swappable (Cohere, HuggingFace) without changing any other code.
+| File | Action | Purpose |
+|---|---|---|
+| `src/lib/embeddings.ts` | Create | `embedText(text): Promise<number[]>` via OpenAI SDK |
+| `src/lib/search.ts` | Create | Full search pipeline: embed → similarity → fallback → log |
+| `src/app/[locale]/search/page.tsx` | Create | Results page (Server Component) |
+| `src/app/api/admin/embed-providers/route.ts` | Create | Batch embed all providers (service role, admin-only) |
+| `src/app/[locale]/admin/providers/actions.ts` | Modify | Generate embedding on create/update |
+| `src/app/[locale]/account/actions.ts` | Modify | Same for `createOwnProvider` / `updateOwnProvider` |
+| `src/app/[locale]/page.tsx` | Modify | Wire homepage search form to `/search` |
+| `src/app/[locale]/category/[slug]/page.tsx` | Modify | Add search bar linking to `/search` |
+| `messages/pt-BR.json` | Modify | Add `search` namespace |
+| `messages/en.json` | Modify | Same |
+| `supabase/migrations/003_search_rpc.sql` | Create | `match_providers` RPC function |
+| `vitest.config.ts` | Create | Vitest config with path aliases |
+| `src/lib/embeddings.test.ts` | Create | Unit tests for `embedText` |
+| `src/lib/search.test.ts` | Create | Unit tests for search pipeline |
 
----
+## Embeddings
 
-## Module Architecture
-
-The `SearchModule` is a single deep module with a simple public interface. All complexity is internal.
-
-```
-src/lib/search/
-├── index.ts       ← public interface: search(query, options) → Provider[]
-├── embed.ts       ← EmbeddingProvider interface + OpenAI implementation
-├── query.ts       ← Supabase pgvector cosine similarity SQL
-├── fallback.ts    ← pg_trgm full-text search fallback
-└── logger.ts      ← logs every query + result count to search_queries table
-```
-
-### Public Interface
+### `src/lib/embeddings.ts`
 
 ```ts
-// The only thing the rest of the app needs to know
-search(
-  query: string,
-  options?: {
-    bairroId?: string   // filter to providers who serve this bairro
-    limit?: number      // default: 20
-  }
-): Promise<Provider[]>
+import OpenAI from "openai";
 
-// Provider — the shape returned by search()
-interface Provider {
-  id: string
-  name: string
-  slug: string
-  description_pt: string | null
-  description_en: string | null
-  whatsapp: string | null
-  home_bairro: { id: string; name: string } | null
-  categories: { id: string; name_pt: string; slug: string }[]
-  photos: { url: string; sort_order: number }[]
-  similarity_score: number   // cosine similarity (0–1); 0 when result came from fallback
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export async function embedText(text: string): Promise<number[]> {
+  const response = await client.embeddings.create({
+    model: "text-embedding-3-small",
+    input: text.slice(0, 8192),
+  });
+  return response.data[0].embedding;
 }
 ```
 
-### Similarity Threshold
-
-Vector search uses a minimum cosine similarity of `0.30`. Results below this threshold are dropped — they indicate the query has no meaningful semantic match in the catalog.
-
-When vector search returns 0 results above the threshold (or OpenAI is unavailable), the fallback runs. The fallback has no similarity threshold — it returns whatever pg_trgm finds, ordered by text relevance score.
-
-### Default Limit
-
-`options.limit` defaults to `20` when not provided.
-
-### EmbeddingProvider Interface
+### Embedding text construction
 
 ```ts
-interface EmbeddingProvider {
-  embed(text: string): Promise<number[]>
+function buildProviderText(
+  name: string,
+  descriptionPt: string | null,
+  categoryNames: string[]
+): string {
+  return [name, descriptionPt ?? "", categoryNames.join(" ")]
+    .filter(Boolean)
+    .join(" ");
 }
+```
 
-// Current implementation
-class OpenAIEmbeddingProvider implements EmbeddingProvider {
-  async embed(text: string): Promise<number[]>
+Category names are fetched after the provider insert from `provider_categories` + `categories`. The embedding is generated in a `try/catch` — failure does not block the save or redirect.
+
+### Embedding on admin and self-service actions
+
+After all provider data is written (categories, service areas, photos), append this block to `createProvider`, `updateProvider`, `createOwnProvider`, and `updateOwnProvider`:
+
+```ts
+try {
+  const { data: cats } = await supabase
+    .from("provider_categories")
+    .select("categories(name_pt)")
+    .eq("provider_id", providerId);
+  const catNames = (cats ?? []).flatMap((c) => {
+    const cat = c.categories;
+    return Array.isArray(cat)
+      ? cat.map((x) => x.name_pt)
+      : cat
+      ? [(cat as { name_pt: string }).name_pt]
+      : [];
+  });
+  const text = buildProviderText(name, description_pt ?? null, catNames);
+  const embedding = await embedText(text);
+  await supabase
+    .from("providers")
+    .update({ embedding: JSON.stringify(embedding) })
+    .eq("id", providerId);
+} catch {
+  // non-blocking
 }
-
-// Future — zero changes needed outside embed.ts
-// class CohereEmbeddingProvider implements EmbeddingProvider
-// class HuggingFaceEmbeddingProvider implements EmbeddingProvider
 ```
 
----
+### Batch route
 
-## Search Flow (Query Time)
+`GET /api/admin/embed-providers` — uses `SUPABASE_SERVICE_ROLE_KEY`. Protected by `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>` header check. Fetches all active providers where `embedding IS NULL`, generates embeddings sequentially, updates each row. Returns `{ processed: N, errors: M }`.
 
-```
-User query: "quero um eletricista no centro"
-     │
-     ▼
-1. embed(query) → vector[1536]          via OpenAI API
-     │
-     ├─ OpenAI available ──────────────► pgvector cosine similarity search
-     │                                   WHERE status = 'active'
-     │                                   AND similarity >= 0.30
-     │                                   + bairroId filter (if provided)
-     │                                   → ranked Provider[]
-     │
-     └─ OpenAI unavailable ────────────► pg_trgm full-text fallback
-     │   (any of: missing OPENAI_API_KEY,   WHERE status = 'active'
-     │    non-2xx HTTP response, thrown      searches: name + description_pt
-     │    exception, or 0 results above      via to_tsvector('portuguese', ...)
-     │    similarity threshold 0.30)         → Provider[]
-     │
-     ▼
-4. log to search_queries (always)       query text, results count, bairro filter,
-   using service role client            query embedding (if available), user_id
-   (bypasses RLS — search is public,    null user_id = anonymous visitor
-    logging must work for anon users)
-     │
-     ▼
-5. return Provider[]
-```
+## Search Pipeline
 
----
-
-## Embedding Generation (Provider Listings)
-
-### What Gets Embedded
-
-```
-"{name}. {description_pt}. Categorias: {category_names}. Bairro: {home_bairro_name}"
-```
-
-Example:
-```
-"João Silva Elétrica. Serviços elétricos residenciais e comerciais, instalação e manutenção. Categorias: Eletricista. Bairro: Centro"
-```
-
-### When Embeddings Are Generated
-
-- **After admin saves a listing** — `POST /api/admin/providers/[id]/embed` called inline; admin-only (protected by session role check, returns 403 if not admin)
-- **After provider self-registers** — same endpoint called automatically on save
-- **Batch backfill** — `POST /api/admin/providers/embed-all`; admin-only; iterates all providers where `embedding IS NULL`, calls OpenAI for each, updates the row; returns `{ processed: n, failed: n }`
-
-Providers saved without an embedding (e.g., OpenAI unavailable) remain `status: active` but have `embedding IS NULL` — they are excluded from vector search until re-embedded via the batch backfill. They remain findable via pg_trgm fallback.
-
----
-
-## Schema
-
-No migration needed for the providers table — `vector(1536)` and HNSW index already defined in `001_initial_schema.sql`.
-
-New migration `002_search_enhancements.sql`:
+### PostgreSQL RPC (`supabase/migrations/003_search_rpc.sql`)
 
 ```sql
--- Store query embeddings for future intent clustering
-alter table public.search_queries
-  add column query_embedding vector(1536);
-
--- Full-text search index for pg_trgm fallback
--- Searches name + description_pt combined
-alter table public.providers
-  add column search_text tsvector
-  generated always as (
-    to_tsvector('portuguese', coalesce(name, '') || ' ' || coalesce(description_pt, ''))
-  ) stored;
-
-create index idx_providers_search_text on public.providers using gin(search_text);
+create or replace function public.match_providers(
+  query_embedding vector(1536),
+  bairro_filter uuid default null,
+  match_threshold float default 0.3,
+  match_count int default 20
+)
+returns table (
+  id uuid, name text, slug text, description_pt text,
+  whatsapp text, home_bairro_id uuid, similarity float
+)
+language sql stable
+as $$
+  select
+    p.id, p.name, p.slug, p.description_pt,
+    p.whatsapp, p.home_bairro_id,
+    1 - (p.embedding <=> query_embedding) as similarity
+  from public.providers p
+  where
+    p.status = 'active'
+    and p.embedding is not null
+    and 1 - (p.embedding <=> query_embedding) > match_threshold
+    and (bairro_filter is null or p.home_bairro_id = bairro_filter)
+  order by p.embedding <=> query_embedding
+  limit match_count;
+$$;
 ```
 
-This enables future clustering of search intents without reprocessing history, and powers the pg_trgm fallback on `name` and `description_pt` in Portuguese.
-
----
-
-## Data Intelligence (Market Gap Detection)
-
-Every search is logged. Zero-result searches are the signal.
+### `src/lib/search.ts`
 
 ```ts
-// Logged for every search
-{
-  query_text: string,
-  results_count: number,     // 0 = market gap signal
-  bairro_filter_id: uuid,    // which area had the gap
-  query_embedding: vector,   // for future intent clustering
-  user_id: uuid | null,
-  created_at: timestamp
-}
+export type ProviderSearchResult = {
+  id: string;
+  name: string;
+  slug: string;
+  description_pt: string | null;
+  whatsapp: string | null;
+  home_bairro: { name: string; slug: string } | null;
+  categories: { name_pt: string; name_en: string | null; icon: string | null }[];
+};
+
+export async function searchProviders({
+  query,
+  bairroId,
+  userId,
+  supabase,
+}: {
+  query: string;
+  bairroId?: string | null;
+  userId?: string | null;
+  supabase: SupabaseClient;
+}): Promise<{ results: ProviderSearchResult[]; usedFallback: boolean }>
 ```
 
-### What This Enables
+**Flow:**
+1. `embedText(query)` → get vector
+2. Call `match_providers` RPC (with `bairro_filter` if provided)
+3. If RPC returns ≥ 1 results → semantic path
+4. If RPC returns 0 → trigram fallback: `providers` table with `.ilike("name", "%q%")` and `.textSearch` on `description_pt`, filtered by `status = 'active'` and optionally bairro
+5. Log to `search_queries`: `{ query_text: query, results_count, user_id, bairro_filter_id }`
+6. If `embedText` throws → skip to trigram fallback immediately (graceful degradation)
+7. Fetch full provider rows (bairro name, categories) for the result IDs in a second query
 
-- **Admin dashboard:** "What are people searching for that has no providers?"
-- **Geographic gap map:** Bairro X has 12 searches for "chaveiro" but 0 providers → sales lead
-- **Category discovery:** "dedetização" appears 20× in zero-result queries → add as category
-- **Demand before supply:** Validate new category decisions with real search data
+## Pages & Components
 
-**Portfolio story:** Every failed search is a lead generation opportunity. The search module feeds behavioral data back into the business.
+### `/[locale]/search/page.tsx`
 
----
+Server Component. Reads `searchParams.q` and `searchParams.bairro_id`.
+- Empty `q` → `redirect("/")`
+- Calls `searchProviders()` with server Supabase client
+- Renders:
+  - `<Header />`
+  - Heading: `t("search.resultsFor", { q })`
+  - Bairro filter `<select>` (GET form, updates `bairro_id` param) — populated from all bairros
+  - Provider cards identical to catalog page (name, bairro pill, category pills, WhatsApp button)
+  - Empty state: `t("search.noResults")` + hint to remove bairro filter if one is active
 
-## Testing Strategy
+### Homepage
 
-Integration tests against a real Supabase test project. No mocks — consistent with project testing philosophy.
+Wire the existing search `<input>` to a `<form method="GET" action="/{locale}/search">` with `name="q"`. No JS required.
 
-### Seed Data (created before tests run)
+### Catalog page
 
-```
-Provider A: "João Elétrica" — category: Eletricista — bairro: Centro — serves: [Centro, Movelar]
-Provider B: "Maria Cabelos" — category: Cabeleireiro — bairro: Shell — serves: [Shell, Colina]
-Provider C: "Limpeza Total" — category: Diarista — bairro: Centro — serves: [Centro]
-Provider D: "Carlos Encanamentos" — category: Encanador — bairro: Movelar — serves: [Movelar, Centro]
-```
+Add a compact search bar (text input + submit button) above the provider list. On submit, navigates to `/search?q=...`.
 
-### Test Cases
+## Tests
 
-| # | Input | Options | Expected result | Pass condition |
-|---|-------|---------|-----------------|----------------|
-| 1 | `"consertar chuveiro"` | none | Provider A and/or D | Both electrician and plumber appear; A or D is rank 1 |
-| 2 | `"cabeleireira"` | `{ bairroId: Shell.id }` | Provider B only | B appears; A, C, D do not appear |
-| 3 | `"cabeleireira"` | `{ bairroId: Centro.id }` | Empty or no B | B does not appear (doesn't serve Centro) |
-| 4 | `"xyz123irrelevant@@##"` | none | `[]` | Returns empty array AND `search_queries` table has 1 new row with `results_count: 0` |
-| 5 | `"consertar chuveiro"` | none (OpenAI key set to invalid) | Provider A or D | Returns results via pg_trgm fallback; `similarity_score: 0` on all results |
-| 6 | `"chaveiro"` | `{ bairroId: Centro.id }` | `[]` | Zero-result log row has `bairro_filter_id: Centro.id` populated |
-
-### EmbeddingProvider Contract Test
+### `vitest.config.ts`
 
 ```ts
-// Not an integration test — call OpenAI directly
-const provider = new OpenAIEmbeddingProvider()
-const vector = await provider.embed("João Silva Elétrica. Eletricista. Bairro: Centro")
-expect(vector).toHaveLength(1536)
-expect(vector.every(n => typeof n === "number")).toBe(true)
+import { defineConfig } from "vitest/config";
+import tsconfigPaths from "vite-tsconfig-paths";
+
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+  test: { environment: "node", globals: true },
+});
 ```
 
----
+Dev deps: `vitest`, `vite-tsconfig-paths`, `@vitest/coverage-v8`.
 
-## Out of Scope
+### `src/lib/embeddings.test.ts`
 
-- BM25 / Reciprocal Rank Fusion — add later if search quality is a real problem
-- LLM reranking (Cohere Rerank API) — not needed at launch scale
-- QMD local tool — useful for dev experimentation only, not in production path
-- Real-time streaming search results
-- Search autocomplete / suggestions
+Mocks `openai` module. Verifies:
+- Returns a `number[]` on success
+- Slices input to 8192 chars before calling the API
+- Re-throws when the OpenAI client throws
+
+### `src/lib/search.test.ts`
+
+Mocks Supabase client and `embedText`. Verifies:
+- **Semantic path**: RPC returns results → they are returned, `results_count > 0` logged
+- **Fallback path**: RPC returns empty → trigram query runs, result logged
+- **Zero-result logging**: both paths log `results_count: 0` when nothing found
+- **Bairro filter**: RPC called with `bairro_filter` when `bairroId` provided; trigram also filters by bairro
+- **Embed failure**: `embedText` throws → falls back to trigram, does not throw to caller
+
+## Translation Keys
+
+New `search` namespace in both message files:
+
+```
+search.title        — "Busca" / "Search"
+search.placeholder  — "O que você precisa?" / "What do you need?"
+search.noResults    — "Nenhum prestador encontrado" / "No providers found"
+search.resultsFor   — "Resultados para \"{q}\"" / "Results for \"{q}\""
+search.filterBairro — "Filtrar por bairro" / "Filter by neighborhood"
+search.allBairros   — "Todos os bairros" / "All neighborhoods"
+search.tryWithout   — "Tente sem filtro de bairro" / "Try without neighborhood filter"
+```
+
+## Error Handling
+
+- Empty `q` → redirect to `/`
+- `embedText` failure → silent fallback to trigram; no error shown to user
+- Both paths return zero → empty state rendered, query still logged
+- Batch embed route → per-row errors caught, counted in `errors` response field; other rows continue
+
+## Tests Not Included
+
+- Actual embedding quality / Portuguese semantic relevance (requires live OpenAI)
+- Supabase RLS enforcement (DB-level concern)
+- E2E browser tests
