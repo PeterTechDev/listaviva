@@ -26,18 +26,19 @@ New migration `003_search_rpc.sql` adds the `match_providers` RPC function only.
 
 | File | Action | Purpose |
 |---|---|---|
+| `package.json` | Modify | Add `openai` (prod); add `vitest`, `vite-tsconfig-paths`, `@vitest/coverage-v8` (dev) — run `npm install openai && npm install -D vitest vite-tsconfig-paths @vitest/coverage-v8` |
 | `src/lib/embeddings.ts` | Create | `embedText(text): Promise<number[]>` via OpenAI SDK; also exports `buildProviderText` |
 | `src/lib/search.ts` | Create | Full search pipeline: embed → similarity → fallback → log |
 | `src/app/[locale]/search/page.tsx` | Create | Results page (Server Component) |
 | `src/app/api/admin/embed-providers/route.ts` | Create | Batch embed all providers (service role, admin-only) |
-| `src/app/[locale]/admin/providers/actions.ts` | Modify | Generate embedding on create/update |
-| `src/app/[locale]/account/actions.ts` | Modify | Same for `createOwnProvider` / `updateOwnProvider` |
+| `src/app/[locale]/admin/providers/actions.ts` | Modify | Add `import { buildProviderText, embedText } from "@/lib/embeddings"`; generate embedding on create/update |
+| `src/app/[locale]/account/actions.ts` | Modify | Add `import { buildProviderText, embedText } from "@/lib/embeddings"`; generate embedding in `createOwnProvider` / `updateOwnProvider` |
 | `src/app/[locale]/page.tsx` | Modify | Wire homepage search form to `/search` |
 | `src/app/[locale]/category/[slug]/page.tsx` | Modify | Add search bar linking to `/search` |
 | `messages/pt-BR.json` | Modify | Add `search` namespace |
 | `messages/en.json` | Modify | Same |
 | `supabase/migrations/003_search_rpc.sql` | Create | `match_providers` RPC function |
-| `vitest.config.ts` | Create | Vitest config with path aliases |
+| `vitest.config.ts` | Create | Vitest config with path aliases (verify `@/*` alias in `tsconfig.json` first) |
 | `src/lib/embeddings.test.ts` | Create | Unit tests for `embedText` |
 | `src/lib/search.test.ts` | Create | Unit tests for search pipeline |
 
@@ -77,7 +78,11 @@ Category names are fetched after the provider insert from `provider_categories` 
 
 ### Embedding on admin and self-service actions
 
-After all provider data is written (categories, service areas, photos), append this block to `createProvider`, `updateProvider`, `createOwnProvider`, and `updateOwnProvider`:
+After all provider data is written (categories, service areas, photos), add this block to `createProvider`, `updateProvider`, `createOwnProvider`, and `updateOwnProvider`.
+
+**Important for `createOwnProvider`:** this block must be inserted **before** the final `redirect("/account")` call — `redirect()` throws a `NEXT_REDIRECT` error that terminates execution, so any code after it is unreachable.
+
+Each actions file must also add at the top: `import { buildProviderText, embedText } from "@/lib/embeddings";`
 
 ```ts
 try {
@@ -191,9 +196,22 @@ export async function searchProviders({
 2. Call `match_providers` RPC (with `bairro_filter` if provided)
 3. If RPC returns ≥ 1 results → semantic path
 4. If RPC returns 0 → trigram fallback: `providers` table with `.ilike("name", "%q%")` OR `.ilike("description_pt", "%q%")`, filtered by `status = 'active'` and optionally bairro (note: `description_pt` is plain text, not a tsvector — use `.ilike()` not `.textSearch()`)
-5. Log to `search_queries`: `{ query_text: query, results_count, user_id, bairro_filter_id }` — wrap in `try/catch`; anonymous users may be blocked by RLS and the insert will silently fail, which is acceptable
+5. Log to `search_queries`: `{ query_text: query, results_count, user_id, bairro_filter_id }` — wrap in `try/catch`; the RLS policy requires `auth.uid() is not null`, so anonymous users will get a policy violation error — this is expected and the `try/catch` swallows it gracefully
 6. If `embedText` throws → skip to trigram fallback immediately (graceful degradation)
-7. Fetch full provider rows (bairro name, categories) for the result IDs in a second query
+7. Fetch full provider rows for the result IDs in a second enrichment query:
+
+```ts
+const { data: enriched } = await supabase
+  .from("providers")
+  .select(`
+    id, name, slug, description_pt, whatsapp,
+    home_bairro:bairros(name, slug),
+    categories:provider_categories(categories(name_pt, name_en, icon))
+  `)
+  .in("id", resultIds);
+```
+
+This assembles `ProviderSearchResult` objects with `home_bairro: { name, slug } | null` and `categories: { name_pt, name_en, icon }[]`.
 
 ## Pages & Components
 
@@ -242,41 +260,40 @@ Mocks `openai` module. Verifies:
 
 ### `src/lib/search.test.ts`
 
-Mocks Supabase client and `embedText`. The Supabase mock must support chained query builder calls. Use a builder factory pattern:
+Mocks Supabase client and `embedText`. The Supabase mock must support chained query builder calls. The `from("providers")` table is called twice: once for the trigram fallback (`.ilike()`) and once for the enrichment query (`.in()`). The mock must differentiate these — use call-count tracking or check the chained method to distinguish them. The mock below is illustrative; refine per-test as needed:
 
 ```ts
 import { vi } from "vitest";
-import * as embeddingsModule from "@/lib/embeddings";
 
 vi.mock("@/lib/embeddings");
 
 function makeSupabaseMock({
   rpcData = [],
-  ilikeData = [],
+  fallbackData = [],
   enrichData = [],
 }: {
   rpcData?: unknown[];
-  ilikeData?: unknown[];
+  fallbackData?: unknown[];
   enrichData?: unknown[];
 }) {
-  const builder = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    or: vi.fn().mockReturnThis(),
-    ilike: vi.fn().mockReturnThis(),
-    in: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockResolvedValue({ error: null }),
-  };
+  let providersCallCount = 0;
   return {
     rpc: vi.fn().mockResolvedValue({ data: rpcData, error: null }),
     from: vi.fn().mockImplementation((table: string) => {
-      if (table === "providers") {
-        return { ...builder, then: async () => ({ data: enrichData, error: null }) };
-      }
       if (table === "search_queries") {
-        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+        return { insert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis() };
       }
-      return { ...builder, then: async () => ({ data: ilikeData, error: null }) };
+      if (table === "providers") {
+        const callIndex = providersCallCount++;
+        const data = callIndex === 0 ? fallbackData : enrichData;
+        const builder: Record<string, unknown> = {};
+        const methods = ["select", "eq", "or", "ilike", "in"];
+        for (const m of methods) builder[m] = vi.fn().mockReturnValue(builder);
+        builder.then = (resolve: (v: unknown) => unknown) =>
+          Promise.resolve({ data, error: null }).then(resolve);
+        return builder;
+      }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ data: [], error: null }) };
     }),
   };
 }
