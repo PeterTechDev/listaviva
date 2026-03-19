@@ -166,7 +166,7 @@ body {
 
 @layer base {
   * {
-    @apply outline-ring/50;
+    @apply border-border outline-ring/50;
   }
   html {
     @apply font-sans;
@@ -174,9 +174,11 @@ body {
 }
 
 /* ── Admin "Carbon" dark theme sidebar tokens ───────────────────────────── */
-/* Scoped to [data-sidebar-theme=carbon] so the public app is unaffected.   */
-/* Applied via AdminSidebar's className on SidebarProvider.                 */
+/* Scoped via .admin-sidebar-carbon on SidebarProvider — public app is      */
+/* completely unaffected. Also overrides Listaviva's @theme color tokens so  */
+/* shadcn components (Button, Badge, Card, Sheet…) render with dark values.  */
 .admin-sidebar-carbon {
+  /* Sidebar component tokens */
   --sidebar:              #09090b; /* zinc-950 */
   --sidebar-foreground:   #f4f4f5; /* zinc-100 */
   --sidebar-border:       #27272a; /* zinc-800 */
@@ -185,4 +187,10 @@ body {
   --sidebar-primary:      #C85C38;
   --sidebar-primary-foreground: #fff;
   --sidebar-ring:         #C85C38;
+
+  /* Override Listaviva @theme tokens so shadcn utilities resolve correctly */
+  --color-background: oklch(0.145 0 0);   /* zinc-950 — bg-background */
+  --color-primary:    oklch(0.922 0 0);   /* near-white — bg-primary, text-primary */
+  --color-accent:     oklch(0.269 0 0);   /* dark neutral — bg-accent */
+  --color-border:     oklch(1 0 0 / 10%); /* dark border — border-border */
 }

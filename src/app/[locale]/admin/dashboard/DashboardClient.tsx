@@ -88,10 +88,10 @@ export default function DashboardClient({
     zeroQueries.reduce((s, r) => s + r.search_count, 0);
 
   const statValues = {
-    activeProviders: stats.active,
-    pendingProviders: stats.pending,
+    activeProviders: stats.active ?? 0,
+    pendingProviders: stats.pending ?? 0,
     totalSearches,
-    pendingActions: pendingActions.total,
+    pendingActions: pendingActions.total ?? 0,
   };
 
   return (
@@ -198,7 +198,7 @@ export default function DashboardClient({
                       <Cell
                         key={i}
                         fill={i % 2 === 0 ? TERRACOTTA : WARM}
-                        opacity={1 - i * 0.06}
+                        opacity={Math.max(1 - i * 0.06, 0.25)}
                       />
                     ))}
                   </Bar>

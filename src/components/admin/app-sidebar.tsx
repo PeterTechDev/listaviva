@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import type { LucideIcon } from "lucide-react";
 import { BarChart3, MapPin, Tag, Users, FileCheck, Lightbulb, User } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
@@ -14,34 +16,37 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
-  SidebarInset,
 } from "@/components/ui/sidebar";
 import type { UserProfile } from "@/lib/auth";
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const ADMIN_ACCENT = "#C85C38";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
 type NavItem = {
-  href: string;
+  href: ComponentProps<typeof Link>["href"];
   label: string;
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  icon: LucideIcon;
 };
 
 type NavGroup = {
   label: string;
-  items: NavItem[];
+  items: readonly [NavItem, ...NavItem[]];
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────
 
 type AdminSidebarProps = {
+  // TODO: pass to useTranslations() when nav labels are i18n'd
   locale: string;
   user: UserProfile | null;
 };
 
 // ── Nav config ─────────────────────────────────────────────────────────────
 
-function buildNavGroups(): NavGroup[] {
+function buildNavGroups(): readonly NavGroup[] {
   return [
     {
       label: "Analytics",
@@ -64,12 +69,12 @@ function buildNavGroups(): NavGroup[] {
         { href: "/admin/recommendations", label: "Recommendations", icon: Lightbulb },
       ],
     },
-  ];
+  ] as const;
 }
 
 // ── Inner sidebar (client) ─────────────────────────────────────────────────
 
-function SidebarInner({ user }: AdminSidebarProps) {
+function SidebarInner({ user }: { user: UserProfile | null }) {
   const pathname = usePathname();
   const navGroups = buildNavGroups();
 
@@ -83,7 +88,7 @@ function SidebarInner({ user }: AdminSidebarProps) {
         >
           <span
             className="text-base font-bold leading-none tracking-tight"
-            style={{ color: "#C85C38" }}
+            style={{ color: ADMIN_ACCENT }}
           >
             Listaviva
           </span>
@@ -104,16 +109,16 @@ function SidebarInner({ user }: AdminSidebarProps) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname.includes(item.href);
+                  const isActive =
+                    pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
 
                   return (
-                    <SidebarMenuItem key={item.href}>
+                    <SidebarMenuItem key={String(item.href)}>
                       <SidebarMenuButton
                         isActive={isActive}
                         tooltip={item.label}
-                        render={
-                          <Link href={item.href as Parameters<typeof Link>[0]["href"]} />
-                        }
+                        render={<Link href={item.href} />}
                         className={
                           isActive
                             ? "text-zinc-100 font-medium"
@@ -123,14 +128,14 @@ function SidebarInner({ user }: AdminSidebarProps) {
                           isActive
                             ? {
                                 backgroundColor: "rgba(200, 92, 56, 0.12)",
-                                color: "#C85C38",
+                                color: ADMIN_ACCENT,
                               }
                             : undefined
                         }
                       >
                         <Icon
                           className="size-4 shrink-0"
-                          style={isActive ? { color: "#C85C38" } : undefined}
+                          style={isActive ? { color: ADMIN_ACCENT } : undefined}
                         />
                         <span>{item.label}</span>
                       </SidebarMenuButton>
@@ -162,8 +167,6 @@ function SidebarInner({ user }: AdminSidebarProps) {
 
 // ── Exported layout wrapper ─────────────────────────────────────────────────
 
-export function AdminSidebar({ locale, user }: AdminSidebarProps) {
-  return <SidebarInner locale={locale} user={user} />;
+export function AdminSidebar({ locale: _locale, user }: AdminSidebarProps) {
+  return <SidebarInner user={user} />;
 }
-
-export { SidebarProvider, SidebarInset };
