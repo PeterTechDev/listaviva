@@ -4,8 +4,8 @@
   "description": "Encontre serviços locais em Linhares",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#10b981",
+  "background_color": "#FAF6EF",
+  "theme_color": "#C85C38",
   "orientation": "portrait",
   "icons": [
     {
