@@ -29,7 +29,7 @@ const emptyForm = {
 };
 
 const inputClass =
-  "w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500";
+  "w-full px-3 py-1.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-background text-primary";
 
 function FormFields({
   form,
@@ -49,7 +49,7 @@ function FormFields({
   return (
     <div className="grid grid-cols-6 gap-3">
       <div className="col-span-2">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           {labels.namePt}
         </label>
         <input
@@ -60,7 +60,7 @@ function FormFields({
         />
       </div>
       <div className="col-span-2">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           {labels.nameEn}
         </label>
         <input
@@ -71,7 +71,7 @@ function FormFields({
         />
       </div>
       <div className="col-span-1">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           {labels.icon}
         </label>
         <input
@@ -83,7 +83,7 @@ function FormFields({
         />
       </div>
       <div className="col-span-1">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           {labels.sortOrder}
         </label>
         <input
@@ -94,7 +94,7 @@ function FormFields({
         />
       </div>
       <div className="col-span-6">
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-muted mb-1">
           {labels.slug}
         </label>
         <input
@@ -204,15 +204,16 @@ export default function CategoriesManager({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <h1 className="text-2xl font-bold text-primary">{t("title")}</h1>
         {!showAdd && (
           <button
+            type="button"
             onClick={() => {
               setShowAdd(true);
               setEditId(null);
               setError(null);
             }}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+            className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
           >
             + {t("add")}
           </button>
@@ -226,8 +227,8 @@ export default function CategoriesManager({
       )}
 
       {showAdd && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-4">{t("addCategory")}</h3>
+        <div className="bg-surface rounded-xl border border-border p-5">
+          <h3 className="font-semibold text-primary mb-4">{t("addCategory")}</h3>
           <FormFields
             form={addForm}
             labels={fieldLabels}
@@ -241,18 +242,20 @@ export default function CategoriesManager({
           />
           <div className="mt-4 flex gap-2">
             <button
+              type="button"
               onClick={handleCreate}
               disabled={!addForm.name_pt || isPending}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover disabled:opacity-50 transition-colors"
             >
               {t("save")}
             </button>
             <button
+              type="button"
               onClick={() => {
                 setShowAdd(false);
                 setAddForm(emptyForm);
               }}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 bg-background border border-border text-muted rounded-lg text-sm font-medium hover:border-accent hover:text-accent transition-colors"
             >
               {t("cancel")}
             </button>
@@ -260,37 +263,37 @@ export default function CategoriesManager({
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border overflow-hidden">
         {categories.length === 0 ? (
-          <div className="py-16 text-center text-gray-400 text-sm">
+          <div className="py-16 text-center text-muted text-sm">
             {t("empty")}
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-background border-b border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider w-10">
                   {t("icon")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("namePt")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("nameEn")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("slug")}
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">
+                <th className="px-4 py-3 text-center text-xs font-semibold text-muted uppercase tracking-wider w-16">
                   {t("sortOrder")}
                 </th>
                 <th className="px-4 py-3 w-40" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {categories.map((cat) =>
                 editId === cat.id ? (
-                  <tr key={cat.id} className="bg-emerald-50">
+                  <tr key={cat.id} className="bg-accent/5">
                     <td colSpan={5} className="px-4 py-3">
                       <FormFields
                         form={editForm}
@@ -302,62 +305,66 @@ export default function CategoriesManager({
                     </td>
                     <td className="px-4 py-3 text-right space-x-2 align-top pt-6">
                       <button
+                        type="button"
                         onClick={handleUpdate}
                         disabled={isPending}
-                        className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                        className="px-3 py-1.5 bg-accent text-white rounded-lg text-xs font-medium hover:bg-accent-hover disabled:opacity-50 transition-colors"
                       >
                         {t("save")}
                       </button>
                       <button
+                        type="button"
                         onClick={() => setEditId(null)}
-                        className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+                        className="px-3 py-1.5 bg-background border border-border text-muted rounded-lg text-xs font-medium hover:border-accent hover:text-accent transition-colors"
                       >
                         {t("cancel")}
                       </button>
                     </td>
                   </tr>
                 ) : (
-                  <tr key={cat.id} className="hover:bg-gray-50">
+                  <tr key={cat.id} className="hover:bg-background transition-colors">
                     <td className="px-4 py-3 text-xl text-center">
                       {cat.icon}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                    <td className="px-4 py-3 text-sm text-primary font-medium">
                       {cat.name_pt}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-muted">
                       {cat.name_en}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 font-mono">
+                    <td className="px-4 py-3 text-sm text-muted font-mono">
                       {cat.slug}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 text-center">
+                    <td className="px-4 py-3 text-sm text-muted text-center">
                       {cat.sort_order}
                     </td>
                     <td className="px-4 py-3 text-right space-x-1">
                       <button
+                        type="button"
                         onClick={() => handleMoveUp(cat.id, cat.sort_order)}
                         disabled={isPending}
-                        title={t("moveUp")}
-                        className="px-2 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                        className="px-2 py-1.5 bg-background border border-border text-muted rounded-lg text-xs font-medium hover:border-accent hover:text-accent disabled:opacity-50 transition-colors"
                       >
                         {t("moveUp")}
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleMoveDown(cat.id, cat.sort_order)}
                         disabled={isPending}
-                        title={t("moveDown")}
-                        className="px-2 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                        className="px-2 py-1.5 bg-background border border-border text-muted rounded-lg text-xs font-medium hover:border-accent hover:text-accent disabled:opacity-50 transition-colors"
                       >
                         {t("moveDown")}
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleEditStart(cat)}
                         disabled={isPending}
-                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                        className="px-3 py-1.5 bg-background border border-border text-primary rounded-lg text-xs font-medium hover:border-accent hover:text-accent disabled:opacity-50 transition-colors"
                       >
                         {t("edit")}
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDelete(cat.id, cat.name_pt)}
                         disabled={isPending}
                         className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 disabled:opacity-50 transition-colors"

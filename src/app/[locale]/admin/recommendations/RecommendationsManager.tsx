@@ -40,55 +40,75 @@ export default function RecommendationsManager({
   }
 
   if (recommendations.length === 0) {
-    return <p className="text-gray-500">{t("empty")}</p>;
+    return (
+      <div className="py-16 text-center text-muted text-sm">{t("empty")}</div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b text-left">
-              <th className="py-2 pr-4 font-medium">{t("providerName")}</th>
-              <th className="py-2 pr-4 font-medium">{t("category")}</th>
-              <th className="py-2 pr-4 font-medium">{t("whatsapp")}</th>
-              <th className="py-2 pr-4 font-medium">{t("bairro")}</th>
-              <th className="py-2 pr-4 font-medium">{t("description")}</th>
-              <th className="py-2 pr-4 font-medium">{t("submitter")}</th>
-              <th className="py-2 pr-4 font-medium">{t("date")}</th>
-              <th className="py-2 font-medium">{t("actions")}</th>
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+      <div className="bg-surface rounded-xl border border-border overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-background border-b border-border">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
+                {t("providerName")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
+                {t("category")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
+                {t("whatsapp")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
+                {t("bairro")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
+                {t("description")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
+                {t("submitter")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
+                {t("date")}
+              </th>
+              <th className="px-4 py-3 w-36" />
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border">
             {recommendations.map((rec) => (
-              <tr key={rec.id} className="border-b">
-                <td className="py-2 pr-4 font-medium">{rec.provider_name}</td>
-                <td className="py-2 pr-4">{rec.categories?.name_pt ?? "—"}</td>
-                <td className="py-2 pr-4">{rec.whatsapp ?? "—"}</td>
-                <td className="py-2 pr-4">{rec.bairros?.name ?? "—"}</td>
-                <td className="py-2 pr-4 max-w-xs truncate">{rec.description ?? "—"}</td>
-                <td className="py-2 pr-4">{rec.profiles?.full_name ?? "—"}</td>
-                <td className="py-2 pr-4">
+              <tr key={rec.id} className="hover:bg-background transition-colors">
+                <td className="px-4 py-3 font-medium text-primary">{rec.provider_name}</td>
+                <td className="px-4 py-3 text-muted">{rec.categories?.name_pt ?? "—"}</td>
+                <td className="px-4 py-3 text-muted">{rec.whatsapp ?? "—"}</td>
+                <td className="px-4 py-3 text-muted">{rec.bairros?.name ?? "—"}</td>
+                <td className="px-4 py-3 text-muted max-w-xs truncate">{rec.description ?? "—"}</td>
+                <td className="px-4 py-3 text-muted">{rec.profiles?.full_name ?? "—"}</td>
+                <td className="px-4 py-3 text-muted">
                   {new Date(rec.created_at).toLocaleDateString()}
                 </td>
-                <td className="py-2">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleApprove(rec.id)}
-                      disabled={isPending}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {t("approve")}
-                    </button>
-                    <button
-                      onClick={() => handleReject(rec.id)}
-                      disabled={isPending}
-                      className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 disabled:opacity-50"
-                    >
-                      {t("reject")}
-                    </button>
-                  </div>
+                <td className="px-4 py-3 text-right space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(rec.id)}
+                    disabled={isPending}
+                    className="px-3 py-1.5 bg-accent/10 text-accent rounded-lg text-xs font-medium hover:bg-accent/20 disabled:opacity-50 transition-colors"
+                  >
+                    {t("approve")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReject(rec.id)}
+                    disabled={isPending}
+                    className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 disabled:opacity-50 transition-colors"
+                  >
+                    {t("reject")}
+                  </button>
                 </td>
               </tr>
             ))}

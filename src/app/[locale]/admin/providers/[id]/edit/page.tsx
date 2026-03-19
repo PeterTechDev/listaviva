@@ -71,11 +71,11 @@ export default async function EditProviderPage({
       <div className="flex items-center gap-4">
         <Link
           href="/admin/providers"
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          className="text-sm text-muted hover:text-primary transition-colors"
         >
           ← {t("backToList")}
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-primary">
           {t("editTitle")}: {provider.name}
         </h1>
       </div>

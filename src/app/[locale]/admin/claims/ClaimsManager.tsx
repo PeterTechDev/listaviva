@@ -39,52 +39,54 @@ export default function ClaimsManager({ claims }: { claims: Claim[] }) {
           {error}
         </div>
       )}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border overflow-hidden">
         {claims.length === 0 ? (
-          <div className="py-16 text-center text-gray-400 text-sm">{t("empty")}</div>
+          <div className="py-16 text-center text-muted text-sm">{t("empty")}</div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-background border-b border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("provider")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("claimant")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("message")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("createdAt")}
                 </th>
                 <th className="px-4 py-3 w-40" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {claims.map((c) => (
-                <tr key={c.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                <tr key={c.id} className="hover:bg-background transition-colors">
+                  <td className="px-4 py-3 text-sm font-medium text-primary">
                     {c.providers?.name ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-muted">
                     {c.profiles?.full_name ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                  <td className="px-4 py-3 text-sm text-muted max-w-xs truncate">
                     {c.message ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-muted">
                     {new Date(c.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right space-x-2">
                     <button
+                      type="button"
                       onClick={() => handleApprove(c.id)}
                       disabled={isPending}
-                      className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-medium hover:bg-emerald-100 disabled:opacity-50 transition-colors"
+                      className="px-3 py-1.5 bg-accent/10 text-accent rounded-lg text-xs font-medium hover:bg-accent/20 disabled:opacity-50 transition-colors"
                     >
                       {t("approve")}
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleReject(c.id)}
                       disabled={isPending}
                       className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 disabled:opacity-50 transition-colors"
