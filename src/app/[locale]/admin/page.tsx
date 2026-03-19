@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/navigation";
 
 export default async function AdminPage({
   params,
@@ -6,5 +6,5 @@ export default async function AdminPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  redirect(`/${locale}/admin/bairros`);
+  redirect({ href: "/admin/dashboard", locale });
 }
