@@ -4,14 +4,35 @@ import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+const DEV_MODE = process.env.NODE_ENV === "development";
 
 export default function LoginPage() {
   const t = useTranslations();
   const locale = useLocale();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? `/${locale}`;
   const error = searchParams.get("error");
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [devLoading, setDevLoading] = useState(false);
+
+  async function signInDev() {
+    setDevLoading(true);
+    setOauthError(null);
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: "petersouza@listaviva.local",
+      password: "listavivalocal",
+    });
+    if (authError) {
+      setOauthError(authError.message);
+      setDevLoading(false);
+    } else {
+      router.push(next);
+    }
+  }
 
   async function signInWithGoogle() {
     setOauthError(null);
@@ -61,6 +82,20 @@ export default function LoginPage() {
           <p className="mt-6 text-center text-xs text-muted">
             {t("auth.signupProvider")}
           </p>
+
+          {DEV_MODE && (
+            <>
+              <div className="my-6 border-t border-border" />
+              <button
+                type="button"
+                onClick={signInDev}
+                disabled={devLoading}
+                className="w-full h-11 px-4 bg-amber-100 border border-amber-300 rounded-xl text-sm font-medium text-amber-800 hover:bg-amber-200 transition-colors disabled:opacity-50"
+              >
+                {devLoading ? "Entrando..." : "⚡ Dev login (petersouza)"}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
