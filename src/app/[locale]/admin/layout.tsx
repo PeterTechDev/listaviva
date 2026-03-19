@@ -23,16 +23,16 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
-      <aside className="w-56 bg-gray-900 text-white flex-shrink-0 flex flex-col">
-        <div className="p-4 border-b border-gray-700">
+    <div className="min-h-screen flex bg-background">
+      <aside className="w-56 bg-[#1C1410] text-white flex-shrink-0 flex flex-col">
+        <div className="p-4 border-b border-white/10">
           <Link
             href="/"
-            className="text-lg font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+            className="text-lg font-bold text-accent hover:text-accent/80 transition-colors"
           >
             {t("common.appName")}
           </Link>
-          <p className="text-xs text-gray-400 mt-0.5">Admin</p>
+          <p className="text-xs text-white/40 mt-0.5">Admin</p>
         </div>
 
         <nav className="flex-1 py-4 px-2 space-y-1">
@@ -40,7 +40,7 @@ export default async function AdminLayout({
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
             >
               <span>{icon}</span>
               <span>{label}</span>
@@ -49,8 +49,8 @@ export default async function AdminLayout({
         </nav>
 
         {user && (
-          <div className="p-4 border-t border-gray-700">
-            <p className="text-xs text-gray-400 truncate">
+          <div className="p-4 border-t border-white/10">
+            <p className="text-xs text-white/40 truncate">
               {user.full_name ?? "Admin"}
             </p>
           </div>

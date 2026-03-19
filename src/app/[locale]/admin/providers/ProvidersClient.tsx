@@ -16,9 +16,9 @@ interface Provider {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: "bg-emerald-100 text-emerald-700",
-  pending: "bg-yellow-100 text-yellow-700",
-  inactive: "bg-gray-100 text-gray-600",
+  active: "bg-accent/10 text-accent",
+  pending: "bg-amber-100 text-amber-700",
+  inactive: "bg-surface border border-border text-muted",
 };
 
 export default function ProvidersClient({
@@ -53,6 +53,9 @@ export default function ProvidersClient({
     });
   }
 
+  const inputClass =
+    "px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-background text-primary";
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -63,7 +66,7 @@ export default function ProvidersClient({
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && applyFilters(q, status)}
           placeholder={t("searchPlaceholder")}
-          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+          className={`flex-1 ${inputClass}`}
         />
         <select
           value={status}
@@ -71,7 +74,7 @@ export default function ProvidersClient({
             setStatus(e.target.value);
             applyFilters(q, e.target.value);
           }}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className={inputClass}
         >
           <option value="all">{t("allStatuses")}</option>
           <option value="active">{t("statusActive")}</option>
@@ -79,8 +82,9 @@ export default function ProvidersClient({
           <option value="inactive">{t("statusInactive")}</option>
         </select>
         <button
+          type="button"
           onClick={() => applyFilters(q, status)}
-          className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors"
+          className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
         >
           Filtrar
         </button>
@@ -92,37 +96,37 @@ export default function ProvidersClient({
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border overflow-hidden">
         {providers.length === 0 ? (
-          <div className="py-16 text-center text-gray-400 text-sm">
+          <div className="py-16 text-center text-muted text-sm">
             {t("empty")}
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-background border-b border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("name")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("homeBairro")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("status")}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">
                   {t("tier")}
                 </th>
                 <th className="px-4 py-3 w-32" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {providers.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                <tr key={p.id} className="hover:bg-background transition-colors">
+                  <td className="px-4 py-3 text-sm font-medium text-primary">
                     {p.name}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-muted">
                     {(Array.isArray(p.home_bairro) ? p.home_bairro[0]?.name : p.home_bairro?.name) ?? "—"}
                   </td>
                   <td className="px-4 py-3">
@@ -132,15 +136,16 @@ export default function ProvidersClient({
                       {p.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{p.tier}</td>
+                  <td className="px-4 py-3 text-sm text-muted">{p.tier}</td>
                   <td className="px-4 py-3 text-right space-x-2">
                     <a
                       href={`./providers/${p.id}/edit`}
-                      className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors inline-block"
+                      className="px-3 py-1.5 bg-background border border-border text-primary rounded-lg text-xs font-medium hover:border-accent hover:text-accent transition-colors inline-block"
                     >
                       {t("edit")}
                     </a>
                     <button
+                      type="button"
                       onClick={() => handleDelete(p.id, p.name)}
                       disabled={isPending}
                       className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 disabled:opacity-50 transition-colors"
