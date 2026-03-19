@@ -14,6 +14,8 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
+export const metadata = { title: "Sem conexão — Listaviva" };
+
 export default function OfflineLayout({
   children,
 }: {
@@ -21,6 +23,11 @@ export default function OfflineLayout({
 }) {
   return (
     <html lang="pt-BR" className={`${fraunces.variable} ${dmSans.variable}`}>
+      {/* lang is intentionally hardcoded: offline page is Portuguese-only per spec */}
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      </head>
       <body className="font-sans bg-background text-primary antialiased">
         {children}
       </body>

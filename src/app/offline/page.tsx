@@ -9,7 +9,7 @@ export default function OfflinePage() {
       <p className="text-muted text-sm mb-8">Serviços locais em Linhares</p>
 
       <div className="bg-surface border border-border rounded-2xl p-8 max-w-sm w-full">
-        <p className="text-4xl mb-4">📡</p>
+        <p className="text-4xl mb-4" aria-hidden="true">📡</p>
         <h2 className="text-xl font-semibold text-primary mb-2">
           Você está sem conexão
         </h2>
