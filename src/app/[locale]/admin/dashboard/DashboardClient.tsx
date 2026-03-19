@@ -11,6 +11,10 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { CheckCircle, Clock, Search, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import type {
   ProviderStats,
   PendingActions,
@@ -21,7 +25,11 @@ import type {
   SupplyDemandRow,
 } from "@/lib/dashboard";
 
-type Tab = "overview" | "search" | "supply";
+// ── Brand palette constants ──────────────────────────────────────────────────
+const TERRACOTTA = "#C85C38";
+const WARM = "#E8A040";
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 type Props = {
   stats: ProviderStats;
@@ -33,19 +41,35 @@ type Props = {
   supplyDemand: SupplyDemandRow[];
 };
 
-const STAT_CARDS = [
-  { key: "activeProviders" as const, color: "emerald", icon: "✓" },
-  { key: "pendingProviders" as const, color: "amber", icon: "⏳" },
-  { key: "totalSearches" as const, color: "indigo", icon: "🔍" },
-  { key: "pendingActions" as const, color: "rose", icon: "!" },
+// ── Stat card config ─────────────────────────────────────────────────────────
+
+type StatConfig = {
+  key: "activeProviders" | "pendingProviders" | "totalSearches" | "pendingActions";
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  iconStyle: React.CSSProperties;
+  pulse?: boolean;
+};
+
+const STAT_CARDS: StatConfig[] = [
+  { key: "activeProviders", icon: CheckCircle, iconStyle: { color: TERRACOTTA } },
+  { key: "pendingProviders", icon: Clock, iconStyle: { color: "#F59E0B" } },
+  { key: "totalSearches", icon: Search, iconStyle: { color: "#3B82F6" } },
+  { key: "pendingActions", icon: AlertCircle, iconStyle: { color: "#F43F5E" }, pulse: true },
 ];
 
-const COLOR_MAP: Record<string, { bg: string; text: string; ring: string; dot: string }> = {
-  emerald: { bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200", dot: "bg-emerald-500" },
-  amber:   { bg: "bg-amber-50",   text: "text-amber-700",   ring: "ring-amber-200",   dot: "bg-amber-500"   },
-  indigo:  { bg: "bg-indigo-50",  text: "text-indigo-700",  ring: "ring-indigo-200",  dot: "bg-indigo-500"  },
-  rose:    { bg: "bg-rose-50",    text: "text-rose-700",    ring: "ring-rose-200",    dot: "bg-rose-500"    },
+// ── Chart shared styles ──────────────────────────────────────────────────────
+
+const CHART_TICK_STYLE = { fontSize: 11, fill: "#71717a" }; // zinc-500
+const CHART_TOOLTIP_STYLE = {
+  background: "#27272a",
+  border: "1px solid #3f3f46",
+  borderRadius: 8,
+  fontSize: 12,
+  color: "#f4f4f5",
 };
+const CHART_CURSOR_FILL = "rgba(255,255,255,0.04)";
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 export default function DashboardClient({
   stats,
@@ -57,7 +81,7 @@ export default function DashboardClient({
   supplyDemand,
 }: Props) {
   const t = useTranslations("dashboard");
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "search" | "supply">("overview");
 
   const totalSearches =
     topQueries.reduce((s, r) => s + r.search_count, 0) +
@@ -70,206 +94,213 @@ export default function DashboardClient({
     pendingActions: pendingActions.total,
   };
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "overview", label: t("overview") },
-    { id: "search",   label: t("searchAnalytics") },
-    { id: "supply",   label: t("supplyDemand") },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">{t("title")}</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Listaviva · Linhares, ES</p>
+          <h1 className="text-xl font-bold text-zinc-100 tracking-tight">{t("title")}</h1>
+          <p className="text-xs text-zinc-500 mt-0.5">Listaviva · Linhares, ES</p>
         </div>
         {pendingActions.total > 0 && (
-          <span className="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 ring-1 ring-rose-200 text-xs font-semibold px-3 py-1.5 rounded-full">
+          <span className="inline-flex items-center gap-1.5 bg-rose-950/60 text-rose-400 ring-1 ring-rose-800 text-xs font-semibold px-3 py-1.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
             {pendingActions.total} {t("pendingActions").toLowerCase()}
           </span>
         )}
       </div>
 
-      {/* Tab bar */}
-      <div role="tablist" className="flex gap-px bg-gray-200 rounded-lg p-0.5 w-fit">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            role="tab"
-            id={`tab-${tab.id}`}
-            aria-selected={activeTab === tab.id}
-            aria-controls={`tabpanel-${tab.id}`}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
-              activeTab === tab.id
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList className="bg-zinc-900 border border-zinc-800">
+          <TabsTrigger value="overview" className="data-active:bg-zinc-800 data-active:text-zinc-100 text-zinc-400">
+            {t("overview")}
+          </TabsTrigger>
+          <TabsTrigger value="search" className="data-active:bg-zinc-800 data-active:text-zinc-100 text-zinc-400">
+            {t("searchAnalytics")}
+          </TabsTrigger>
+          <TabsTrigger value="supply" className="data-active:bg-zinc-800 data-active:text-zinc-100 text-zinc-400">
+            {t("supplyDemand")}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* ── Tab: Overview ─────────────────────────────────────────── */}
-      {activeTab === "overview" && (
-        <div role="tabpanel" id="tabpanel-overview" aria-labelledby="tab-overview" className="space-y-5">
+        {/* ── Overview tab ─────────────────────────────────────────────── */}
+        <TabsContent value="overview" className="space-y-5 mt-4">
           {/* Stat cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {STAT_CARDS.map(({ key, color, icon }) => {
-              const c = COLOR_MAP[color];
+            {STAT_CARDS.map(({ key, icon: Icon, iconStyle, pulse }) => {
+              const value = statValues[key];
+              const showPulse = pulse && value > 0;
               return (
-                <div
+                <Card
                   key={key}
-                  className={`${c.bg} ring-1 ${c.ring} rounded-xl p-4 flex items-start gap-3`}
+                  className="bg-zinc-900 border-zinc-800 ring-0 gap-3"
                 >
-                  <span className={`mt-0.5 flex-shrink-0 w-7 h-7 rounded-lg ${c.dot} text-white flex items-center justify-center text-xs font-bold`}>
-                    {icon}
-                  </span>
-                  <div>
-                    <div className={`text-2xl font-bold ${c.text} leading-none`}>
-                      {statValues[key]}
+                  <CardHeader className="pb-0 border-b-0">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                        {t(key)}
+                      </CardTitle>
+                      <div className="relative">
+                        {showPulse && (
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                        )}
+                        <Icon className="size-4" style={iconStyle} />
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1 leading-tight">
-                      {t(key)}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-mono font-bold text-zinc-100 leading-none tabular-nums">
+                      {value}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <ChartCard title={t("byCategory")} className="lg:col-span-2" noData={byCategory.length === 0} noDataLabel={t("noData")}>
+            <DarkChartCard
+              title={t("byCategory")}
+              className="lg:col-span-2"
+              noData={byCategory.length === 0}
+              noDataLabel={t("noData")}
+            >
               <ResponsiveContainer width="100%" height={Math.max(byCategory.length * 32, 120)}>
                 <BarChart layout="vertical" data={byCategory} margin={{ left: 0, right: 16, top: 4, bottom: 4 }}>
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-                  <YAxis dataKey="name_pt" type="category" width={110} tick={{ fontSize: 12, fill: "#374151" }} axisLine={false} tickLine={false} />
+                  <XAxis type="number" tick={CHART_TICK_STYLE} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name_pt" type="category" width={110} tick={{ ...CHART_TICK_STYLE, fill: "#a1a1aa" }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    cursor={{ fill: "#f3f4f6" }}
-                    contentStyle={{ border: "none", borderRadius: 8, boxShadow: "0 4px 6px -1px rgb(0 0 0 / .1)", fontSize: 12 }}
+                    cursor={{ fill: CHART_CURSOR_FILL }}
+                    contentStyle={CHART_TOOLTIP_STYLE}
                   />
-                  <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} maxBarSize={20} />
+                  <Bar dataKey="count" fill={TERRACOTTA} radius={[0, 4, 4, 0]} maxBarSize={20} />
                 </BarChart>
               </ResponsiveContainer>
-            </ChartCard>
+            </DarkChartCard>
 
-            <ChartCard title={t("byBairro")} noData={byBairro.length === 0} noDataLabel={t("noData")}>
+            <DarkChartCard
+              title={t("byBairro")}
+              noData={byBairro.length === 0}
+              noDataLabel={t("noData")}
+            >
               <ResponsiveContainer width="100%" height={Math.max(byBairro.length * 32, 120)}>
                 <BarChart layout="vertical" data={byBairro} margin={{ left: 0, right: 16, top: 4, bottom: 4 }}>
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-                  <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 12, fill: "#374151" }} axisLine={false} tickLine={false} />
+                  <XAxis type="number" tick={CHART_TICK_STYLE} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" width={90} tick={{ ...CHART_TICK_STYLE, fill: "#a1a1aa" }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    cursor={{ fill: "#f3f4f6" }}
-                    contentStyle={{ border: "none", borderRadius: 8, boxShadow: "0 4px 6px -1px rgb(0 0 0 / .1)", fontSize: 12 }}
+                    cursor={{ fill: CHART_CURSOR_FILL }}
+                    contentStyle={CHART_TOOLTIP_STYLE}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20}>
                     {byBairro.map((_, i) => (
-                      <Cell key={i} fill={`hsl(${160 + i * 8}, 60%, ${45 + i * 2}%)`} />
+                      <Cell
+                        key={i}
+                        fill={i % 2 === 0 ? TERRACOTTA : WARM}
+                        opacity={1 - i * 0.06}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </ChartCard>
+            </DarkChartCard>
           </div>
-        </div>
-      )}
+        </TabsContent>
 
-      {/* ── Tab: Search Analytics ──────────────────────────────────── */}
-      {activeTab === "search" && (
-        <div role="tabpanel" id="tabpanel-search" aria-labelledby="tab-search" className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DataCard title={t("topQueries")}>
-            {topQueries.length === 0 ? (
-              <EmptyState label={t("noData")} />
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                    <th className="text-left pb-2 font-medium">{t("query")}</th>
-                    <th className="text-right pb-2 font-medium">{t("count")}</th>
-                    <th className="text-right pb-2 font-medium">{t("avgResults")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {topQueries.map((row, i) => (
-                    <tr key={row.query_text} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-2.5 flex items-center gap-2">
-                        <span className="text-xs text-gray-300 font-mono w-4">{i + 1}</span>
-                        <span className="font-medium text-gray-800">{row.query_text}</span>
-                      </td>
-                      <td className="py-2.5 text-right tabular-nums text-gray-600">{row.search_count}</td>
-                      <td className="py-2.5 text-right tabular-nums text-gray-500">{row.avg_results.toFixed(1)}</td>
+        {/* ── Search Analytics tab ──────────────────────────────────────── */}
+        <TabsContent value="search" className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DarkDataCard title={t("topQueries")}>
+              {topQueries.length === 0 ? (
+                <DarkEmptyState label={t("noData")} />
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-zinc-500 uppercase tracking-wide border-b border-zinc-800">
+                      <th className="text-left pb-2 font-medium">{t("query")}</th>
+                      <th className="text-right pb-2 font-medium">{t("count")}</th>
+                      <th className="text-right pb-2 font-medium">{t("avgResults")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </DataCard>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60">
+                    {topQueries.map((row, i) => (
+                      <tr key={row.query_text} className="hover:bg-zinc-800/40 transition-colors">
+                        <td className="py-2.5 flex items-center gap-2">
+                          <span className="text-xs text-zinc-600 font-mono w-4">{i + 1}</span>
+                          <span className="font-medium text-zinc-200">{row.query_text}</span>
+                        </td>
+                        <td className="py-2.5 text-right tabular-nums text-zinc-400">{row.search_count}</td>
+                        <td className="py-2.5 text-right tabular-nums text-zinc-500">{row.avg_results.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DarkDataCard>
 
-          <DataCard title={t("zeroResults")} titleClass="text-rose-600">
-            {zeroQueries.length === 0 ? (
-              <EmptyState label={t("noData")} />
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                    <th className="text-left pb-2 font-medium">{t("query")}</th>
-                    <th className="text-right pb-2 font-medium">{t("searches")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {zeroQueries.map((row, i) => (
-                    <tr key={row.query_text} className="hover:bg-rose-50/50 transition-colors">
-                      <td className="py-2.5 flex items-center gap-2">
-                        <span className="text-xs text-gray-300 font-mono w-4">{i + 1}</span>
-                        <span className="font-medium text-gray-800">{row.query_text}</span>
-                      </td>
-                      <td className="py-2.5 text-right tabular-nums">
-                        <span className="bg-rose-50 text-rose-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-                          {row.search_count}
-                        </span>
-                      </td>
+            <DarkDataCard title={t("zeroResults")} titleClass="text-rose-400">
+              {zeroQueries.length === 0 ? (
+                <DarkEmptyState label={t("noData")} />
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-zinc-500 uppercase tracking-wide border-b border-zinc-800">
+                      <th className="text-left pb-2 font-medium">{t("query")}</th>
+                      <th className="text-right pb-2 font-medium">{t("searches")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </DataCard>
-        </div>
-      )}
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60">
+                    {zeroQueries.map((row, i) => (
+                      <tr key={row.query_text} className="hover:bg-rose-950/20 transition-colors">
+                        <td className="py-2.5 flex items-center gap-2">
+                          <span className="text-xs text-zinc-600 font-mono w-4">{i + 1}</span>
+                          <span className="font-medium text-zinc-200">{row.query_text}</span>
+                        </td>
+                        <td className="py-2.5 text-right tabular-nums">
+                          <Badge className="bg-rose-950/60 text-rose-400 border-rose-800 border text-xs font-semibold px-2 py-0.5 rounded-full">
+                            {row.search_count}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DarkDataCard>
+          </div>
+        </TabsContent>
 
-      {/* ── Tab: Supply & Demand ───────────────────────────────────── */}
-      {activeTab === "supply" && (
-        <div role="tabpanel" id="tabpanel-supply" aria-labelledby="tab-supply">
-          <DataCard title={t("supplyDemand")}>
+        {/* ── Supply & Demand tab ───────────────────────────────────────── */}
+        <TabsContent value="supply" className="mt-4">
+          <DarkDataCard title={t("supplyDemand")}>
             {supplyDemand.length === 0 ? (
-              <EmptyState label={t("noData")} />
+              <DarkEmptyState label={t("noData")} />
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                  <tr className="text-xs text-zinc-500 uppercase tracking-wide border-b border-zinc-800">
                     <th className="text-left pb-2 font-medium">{t("category")}</th>
                     <th className="text-right pb-2 font-medium">{t("providers")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-zinc-800/60">
                   {supplyDemand.map((row) => {
                     const count = row.provider_count;
                     const isEmpty = count === 0;
                     return (
-                      <tr key={row.name_pt} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-2.5 font-medium text-gray-800">{row.name_pt}</td>
+                      <tr key={row.name_pt} className="hover:bg-zinc-800/40 transition-colors">
+                        <td className="py-2.5 font-medium text-zinc-200">{row.name_pt}</td>
                         <td className="py-2.5 text-right">
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums ${
-                            isEmpty
-                              ? "bg-rose-50 text-rose-700"
-                              : count <= 2
-                              ? "bg-amber-50 text-amber-700"
-                              : "bg-gray-100 text-gray-600"
-                          }`}>
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums border ${
+                              isEmpty
+                                ? "bg-rose-950/60 text-rose-400 border-rose-800"
+                                : count <= 2
+                                ? "bg-amber-950/60 text-amber-400 border-amber-800"
+                                : "bg-zinc-800 text-zinc-400 border-zinc-700"
+                            }`}
+                          >
                             {count}
                           </span>
                         </td>
@@ -279,16 +310,16 @@ export default function DashboardClient({
                 </tbody>
               </table>
             )}
-          </DataCard>
-        </div>
-      )}
+          </DarkDataCard>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function ChartCard({
+function DarkChartCard({
   title,
   children,
   noData,
@@ -302,16 +333,16 @@ function ChartCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-5 ${className}`}>
-      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">{title}</h2>
-      {noData ? <EmptyState label={noDataLabel} /> : children}
+    <div className={`bg-zinc-900 rounded-xl border border-zinc-800 p-5 ${className}`}>
+      <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-4">{title}</h2>
+      {noData ? <DarkEmptyState label={noDataLabel} /> : children}
     </div>
   );
 }
 
-function DataCard({
+function DarkDataCard({
   title,
-  titleClass = "text-gray-800",
+  titleClass = "text-zinc-200",
   children,
 }: {
   title: string;
@@ -319,16 +350,16 @@ function DataCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-5">
       <h2 className={`text-sm font-semibold mb-4 ${titleClass}`}>{title}</h2>
       {children}
     </div>
   );
 }
 
-function EmptyState({ label }: { label: string }) {
+function DarkEmptyState({ label }: { label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+    <div className="flex flex-col items-center justify-center py-10 text-zinc-700">
       <span className="text-3xl mb-2">—</span>
       <span className="text-xs">{label}</span>
     </div>
