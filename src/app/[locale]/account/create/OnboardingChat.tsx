@@ -43,7 +43,6 @@ export default function OnboardingChat({ onComplete }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const initializedRef = useRef(false);
 
   // Auto-scroll on new messages or while pending
@@ -55,13 +54,15 @@ export default function OnboardingChat({ onComplete }: Props) {
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
-    sendMessage("", {}, true);
+    sendMessage("", {}, null, {}, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function sendMessage(
     userText: string,
     currentData: CollectedData,
+    currentCorrectionField: string | null,
+    currentRetryCount: Record<string, number>,
     isInitial = false,
   ) {
     const newMessages: ChatMessage[] = isInitial
@@ -71,8 +72,8 @@ export default function OnboardingChat({ onComplete }: Props) {
     if (!isInitial) setMessages(newMessages);
     setError(null);
 
-    const step = getCurrentStep(currentData, correctionField);
-    const currentRetry = retryCount[step] ?? 0;
+    const step = getCurrentStep(currentData, currentCorrectionField);
+    const currentRetry = currentRetryCount[step] ?? 0;
     const failingField = currentRetry >= 2 ? step : undefined;
 
     startTransition(async () => {
@@ -114,9 +115,9 @@ export default function OnboardingChat({ onComplete }: Props) {
           setRetryCount((prev) => ({ ...prev, [step]: 0 }));
           // Clear correctionField when the field is successfully updated
           if (
-            correctionField &&
-            newData[correctionField as keyof CollectedData] !==
-              currentData[correctionField as keyof CollectedData]
+            currentCorrectionField &&
+            newData[currentCorrectionField as keyof CollectedData] !==
+              currentData[currentCorrectionField as keyof CollectedData]
           ) {
             setCorrectionField(null);
           }
@@ -136,18 +137,17 @@ export default function OnboardingChat({ onComplete }: Props) {
     e.preventDefault();
     const text = input.trim();
     if (!text || isPending) return;
-    // Detect correction intent
-    if (text.toLowerCase().includes("corrig")) {
-      setCorrectionField("__pending__");
-    }
     setInput("");
-    sendMessage(text, collectedData);
+    sendMessage(text, collectedData, correctionField, retryCount);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as unknown as React.FormEvent);
+      const text = input.trim();
+      if (!text || isPending) return;
+      setInput("");
+      sendMessage(text, collectedData, correctionField, retryCount);
     }
   }
 
@@ -200,7 +200,6 @@ export default function OnboardingChat({ onComplete }: Props) {
         className="flex gap-2 pt-3 border-t border-border"
       >
         <textarea
-          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
