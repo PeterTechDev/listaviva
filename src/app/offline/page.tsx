@@ -18,6 +18,7 @@ export default function OfflinePage() {
           anteriormente ainda podem estar disponíveis.
         </p>
         <button
+          type="button"
           onClick={() => window.location.reload()}
           className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-hover transition-colors"
         >

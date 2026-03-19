@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
 import "../globals.css";
 
@@ -15,6 +16,12 @@ const dmSans = DM_Sans({
 });
 
 export const metadata = { title: "Sem conexão — Listaviva" };
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#C85C38",
+};
 
 export default function OfflineLayout({
   children,
