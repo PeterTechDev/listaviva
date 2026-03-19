@@ -5,6 +5,7 @@ import type { CollectedData, ChatMessage } from "@/app/api/onboarding/chat/types
 
 interface Props {
   onComplete: (data: CollectedData) => void;
+  correctionKey?: number;
 }
 
 const FIELD_ORDER = [
@@ -33,7 +34,7 @@ function getCurrentStep(
   return "working_hours"; // fallback
 }
 
-export default function OnboardingChat({ onComplete }: Props) {
+export default function OnboardingChat({ onComplete, correctionKey }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [collectedData, setCollectedData] = useState<CollectedData>({});
   const [retryCount, setRetryCount] = useState<Record<string, number>>({});
@@ -42,8 +43,16 @@ export default function OnboardingChat({ onComplete }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  const latestCollectedDataRef = useRef<CollectedData>({});
+  const latestCorrectionFieldRef = useRef<string | null>(null);
+  const latestRetryCountRef = useRef<Record<string, number>>({});
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+
+  latestCollectedDataRef.current = collectedData;
+  latestCorrectionFieldRef.current = correctionField;
+  latestRetryCountRef.current = retryCount;
 
   // Auto-scroll on new messages or while pending
   useEffect(() => {
@@ -57,6 +66,19 @@ export default function OnboardingChat({ onComplete }: Props) {
     sendMessage("", {}, null, {}, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Send "Quero corrigir algo" when correction is triggered from the preview card
+  useEffect(() => {
+    if (!correctionKey || correctionKey === 0) return;
+    sendMessage(
+      "Quero corrigir algo",
+      latestCollectedDataRef.current,
+      latestCorrectionFieldRef.current,
+      latestRetryCountRef.current
+    );
+    // correctionKey is the intentional trigger; refs hold fresh values
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [correctionKey]);
 
   async function sendMessage(
     userText: string,

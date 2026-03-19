@@ -20,18 +20,33 @@ interface Props {
 }
 
 export default function CreatePageClient({ categories, bairros }: Props) {
-  const [collectedData, setCollectedData] = useState<CollectedData | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<CollectedData | null>(null);
+  const [correctionKey, setCorrectionKey] = useState(0);
 
-  if (collectedData) {
-    return (
-      <ProfilePreviewCard
-        data={collectedData}
-        categories={categories}
-        bairros={bairros}
-        onCorrect={() => setCollectedData(null)}
-      />
-    );
+  function handleComplete(data: CollectedData) {
+    setPreviewData(data);
+    setShowPreview(true);
   }
 
-  return <OnboardingChat onComplete={setCollectedData} />;
+  function handleCorrect() {
+    setShowPreview(false);
+    setCorrectionKey((k) => k + 1);
+  }
+
+  return (
+    <div>
+      <div className={showPreview ? "hidden" : undefined}>
+        <OnboardingChat onComplete={handleComplete} correctionKey={correctionKey} />
+      </div>
+      {showPreview && previewData && (
+        <ProfilePreviewCard
+          data={previewData}
+          categories={categories}
+          bairros={bairros}
+          onCorrect={handleCorrect}
+        />
+      )}
+    </div>
+  );
 }
