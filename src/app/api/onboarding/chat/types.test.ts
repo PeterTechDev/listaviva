@@ -302,4 +302,17 @@ describe("collectedDataToFormData", () => {
     expect(fd.get("hours_sat")).toBe("9h-14h");
     expect(fd.get("hours_sun")).toBe("10h-14h");
   });
+
+  it("ignores invalid (non-canonical) day keys in working_hours", () => {
+    const fd = collectedDataToFormData({
+      name: "A",
+      slug: "a",
+      working_hours: {
+        segunda: "8h-18h",
+        mon: "9h-17h",
+      } as Record<string, string>,
+    });
+    expect(fd.get("hours_mon")).toBe("9h-17h");
+    expect(fd.get("hours_segunda")).toBeNull();
+  });
 });

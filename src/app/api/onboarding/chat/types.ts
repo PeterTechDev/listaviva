@@ -116,21 +116,19 @@ export function collectedDataToFormData(data: CollectedData): FormData {
   }
 
   // Array fields
-  if (data.category_ids && Array.isArray(data.category_ids)) {
-    for (const id of data.category_ids) {
-      fd.append("category_ids", id);
-    }
-  }
-  if (data.service_area_ids && Array.isArray(data.service_area_ids)) {
-    for (const id of data.service_area_ids) {
-      fd.append("service_area_ids", id);
-    }
-  }
+  (data.category_ids ?? []).forEach((id) => {
+    fd.append("category_ids", id);
+  });
+  (data.service_area_ids ?? []).forEach((id) => {
+    fd.append("service_area_ids", id);
+  });
 
-  // Working hours
-  if (data.working_hours && typeof data.working_hours === "object") {
-    for (const [day, hours] of Object.entries(data.working_hours)) {
-      fd.set(`hours_${day}`, hours);
+  // Working hours - iterate over canonical days only
+  const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+  for (const day of days) {
+    const val = data.working_hours?.[day];
+    if (val) {
+      fd.set(`hours_${day}`, val);
     }
   }
 
