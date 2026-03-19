@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   BarChart,
@@ -81,7 +80,6 @@ export default function DashboardClient({
   supplyDemand,
 }: Props) {
   const t = useTranslations("dashboard");
-  const [activeTab, setActiveTab] = useState<"overview" | "search" | "supply">("overview");
 
   const totalSearches =
     topQueries.reduce((s, r) => s + r.search_count, 0) +
@@ -111,7 +109,7 @@ export default function DashboardClient({
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+      <Tabs defaultValue="overview">
         <TabsList className="bg-zinc-900 border border-zinc-800">
           <TabsTrigger value="overview" className="data-active:bg-zinc-800 data-active:text-zinc-100 text-zinc-400">
             {t("overview")}
@@ -287,19 +285,12 @@ export default function DashboardClient({
                 <tbody className="divide-y divide-zinc-800/60">
                   {supplyDemand.map((row) => {
                     const count = row.provider_count;
-                    const isEmpty = count === 0;
                     return (
                       <tr key={row.name_pt} className="hover:bg-zinc-800/40 transition-colors">
                         <td className="py-2.5 font-medium text-zinc-200">{row.name_pt}</td>
                         <td className="py-2.5 text-right">
                           <span
-                            className={`text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums border ${
-                              isEmpty
-                                ? "bg-rose-950/60 text-rose-400 border-rose-800"
-                                : count <= 2
-                                ? "bg-amber-950/60 text-amber-400 border-amber-800"
-                                : "bg-zinc-800 text-zinc-400 border-zinc-700"
-                            }`}
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums border ${supplyBadgeClass(count)}`}
                           >
                             {count}
                           </span>
@@ -315,6 +306,14 @@ export default function DashboardClient({
       </Tabs>
     </div>
   );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function supplyBadgeClass(count: number): string {
+  if (count === 0) return "bg-rose-950/60 text-rose-400 border-rose-800";
+  if (count <= 2) return "bg-amber-950/60 text-amber-400 border-amber-800";
+  return "bg-zinc-800 text-zinc-400 border-zinc-700";
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
