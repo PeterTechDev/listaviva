@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
+import { Header } from "@/components/header";
 import RecommendForm from "./RecommendForm";
 
 export default async function RecommendPage({
@@ -23,13 +24,16 @@ export default async function RecommendPage({
   ]);
 
   return (
-    <div className="max-w-lg mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-2">{t("recommend")}</h1>
-      <p className="text-gray-600 mb-6">{t("recommendDesc")}</p>
-      <RecommendForm
-        categories={categories ?? []}
-        bairros={bairros ?? []}
-      />
+    <div className="min-h-screen">
+      <Header />
+      <main className="max-w-lg mx-auto px-4 py-8 w-full">
+        <h1 className="text-2xl font-bold text-primary mb-2">{t("recommend")}</h1>
+        <p className="text-muted mb-6">{t("recommendDesc")}</p>
+        <RecommendForm
+          categories={categories ?? []}
+          bairros={bairros ?? []}
+        />
+      </main>
     </div>
   );
 }

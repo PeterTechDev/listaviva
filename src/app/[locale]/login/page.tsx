@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
@@ -10,51 +11,54 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? `/${locale}`;
   const error = searchParams.get("error");
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   async function signInWithGoogle() {
+    setOauthError(null);
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}&locale=${locale}`,
       },
     });
+    if (authError) setOauthError(t("common.error"));
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-emerald-600">
+          <h1 className="text-3xl font-bold text-accent font-display">
             {t("common.appName")}
           </h1>
-          <p className="mt-2 text-gray-500 text-sm">{t("common.tagline")}</p>
+          <p className="mt-2 text-muted text-sm">{t("common.tagline")}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-surface rounded-2xl border border-border p-8">
+          <h2 className="text-xl font-semibold text-primary mb-6">
             {t("auth.loginTitle")}
           </h2>
 
           {/* Error message */}
-          {error && (
+          {(error || oauthError) && (
             <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
-              {t("common.error")}
+              {oauthError ?? t("common.error")}
             </div>
           )}
 
           {/* Google sign in */}
           <button
             onClick={signInWithGoogle}
-            className="w-full flex items-center justify-center gap-3 h-11 px-4 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+            className="w-full flex items-center justify-center gap-3 h-11 px-4 bg-background border border-border rounded-xl text-sm font-medium text-primary hover:bg-surface transition-colors"
           >
             <GoogleIcon />
             {t("auth.loginWithGoogle")}
           </button>
 
-          <p className="mt-6 text-center text-xs text-gray-400">
+          <p className="mt-6 text-center text-xs text-muted">
             {t("auth.signupProvider")}
           </p>
         </div>

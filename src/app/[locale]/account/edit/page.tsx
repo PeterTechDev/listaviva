@@ -30,11 +30,11 @@ export default async function EditListingPage({
   if (!provider) notFound();
 
   const [
-    { data: bairros },
-    { data: categories },
-    { data: providerCategories },
-    { data: serviceAreas },
-    { data: photos },
+    { data: bairros, error: bairrosError },
+    { data: categories, error: categoriesError },
+    { data: providerCategories, error: providerCategoriesError },
+    { data: serviceAreas, error: serviceAreasError },
+    { data: photos, error: photosError },
   ] = await Promise.all([
     supabase.from("bairros").select("id, name").order("name"),
     supabase.from("categories").select("id, name_pt, name_en, icon").order("sort_order"),
@@ -42,6 +42,12 @@ export default async function EditListingPage({
     supabase.from("provider_service_areas").select("bairro_id").eq("provider_id", provider.id),
     supabase.from("provider_photos").select("url, sort_order").eq("provider_id", provider.id).order("sort_order"),
   ]);
+
+  if (bairrosError) console.error("Failed to load bairros:", bairrosError);
+  if (categoriesError) console.error("Failed to load categories:", categoriesError);
+  if (providerCategoriesError) console.error("Failed to load provider categories:", providerCategoriesError);
+  if (serviceAreasError) console.error("Failed to load service areas:", serviceAreasError);
+  if (photosError) console.error("Failed to load photos:", photosError);
 
   const initialData = {
     id: provider.id,
@@ -67,11 +73,11 @@ export default async function EditListingPage({
         <div className="flex items-center gap-4 mb-6">
           <Link
             href="/account"
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-sm text-muted hover:text-primary transition-colors"
           >
             ← {t("common.back")}
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-primary">
             {t("account.editListing")}
           </h1>
         </div>

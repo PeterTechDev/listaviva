@@ -137,7 +137,11 @@
     "thu": "Quinta",
     "fri": "Sexta",
     "sat": "Sábado",
-    "sun": "Domingo"
+    "sun": "Domingo",
+    "basicInfo": "Informações básicas",
+    "workingHoursHint": "Ex: 08:00–18:00 · {closed}: deixe em branco",
+    "saveError": "Erro ao salvar. Tente novamente.",
+    "saving": "Salvando..."
   },
   "catalog": {
     "browseByCategory": "Navegar por categoria",
@@ -161,7 +165,16 @@
     "claimSubmit": "Solicitar este anúncio",
     "claimSent": "Solicitação enviada! Aguarde a aprovação do administrador.",
     "claimDuplicate": "Você já tem uma solicitação pendente para este anúncio.",
-    "claimOwned": "Este anúncio já tem um dono."
+    "claimOwned": "Este anúncio já tem um dono.",
+    "statusActive": "Ativo",
+    "viewPublicProfile": "Ver perfil público →",
+    "createListingDesc": "Crie um novo perfil para o seu negócio",
+    "claimListingDesc": "Reivindique um perfil já existente",
+    "recommendCardDesc": "Recomende um novo fornecedor",
+    "claimSearchButton": "Buscar",
+    "claimNoResults": "Nenhum resultado encontrado",
+    "claimSearchError": "Erro ao buscar. Tente novamente.",
+    "claimError": "Erro ao reivindicar. Tente novamente."
   },
   "adminClaims": {
     "title": "Reivindicações",
