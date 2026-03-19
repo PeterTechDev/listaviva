@@ -34,16 +34,16 @@ URL patterns:
 - `/*/category/*`
 - `/*/provider/*`
 
-Config: max 50 cached pages, 30-day TTL, 5 MB storage quota.
+Config: `maxEntries: 50` (evicts oldest when exceeded) + `maxAgeSeconds: 2592000` (30-day TTL). These are the actual enforcement mechanism — roughly ~5 MB estimated, not a hard size limit (Workbox does not enforce byte quotas).
 
 ### Images (runtime caching — CacheFirst)
 Serve from cache; only hit network on a miss.
 
 URL patterns:
 - `/_next/image*` (Next.js image optimization)
-- Supabase Storage CDN URLs for provider photos
+- `https://eglgafwlzcgkdjfynitp.supabase.co/storage/v1/object/public/*` (provider photos)
 
-Config: max 50 entries, 30-day TTL.
+Config: max 50 entries, 30-day TTL (`maxAgeSeconds: 2592000`).
 
 ### Client-side navigation caching
 Set `cacheOnFrontEndNav: true` so SPA navigations (tapping category cards, tapping provider cards via the Next.js router) also populate the runtime cache. Without this, only hard navigations and reloads would be cached — missing most of how users browse Listaviva.
@@ -61,7 +61,11 @@ Set `cacheOnFrontEndNav: true` so SPA navigations (tapping category cards, tappi
 - Styled with design tokens: `bg-background` (#FAF6EF), `text-primary` (#1C1410), `bg-accent` (#C85C38)
 - No Header component, no Supabase calls, no i18n — must be fully static
 
+**Known limitation:** The offline page is Portuguese-only. Locale detection in a static offline page adds complexity for minimal gain — pt-BR is the primary audience (YAGNI).
+
 **Fallback config:** `fallbacks: { document: "/offline" }` in `withPWA`.
+
+**Precaching:** `@ducanh2912/next-pwa` automatically includes all Next.js page routes in the Workbox precache manifest at build time, so `/offline` will always be available offline without an explicit entry.
 
 ---
 
@@ -70,6 +74,10 @@ Set `cacheOnFrontEndNav: true` so SPA navigations (tapping category cards, tappi
 `public/manifest.json` `theme_color` is currently `#10b981` (emerald green — leftover from before the redesign). Update to `#C85C38` to match the current accent design token.
 
 ---
+
+## Cache Invalidation Behaviour
+
+With StaleWhileRevalidate, cached page entries are always served immediately (even if stale), while a background fetch updates the cache. The 30-day `maxAgeSeconds` controls eviction from storage — entries older than 30 days are removed on next cache cleanup, not immediately invalidated. This is intentional: serve what you have offline, refresh when back online.
 
 ## Error Handling
 
@@ -90,10 +98,10 @@ All tests are manual via Chrome DevTools (service workers cannot be meaningfully
 2. Set Network → Offline
 3. Reload the page → shell should load from cache
 
-**Test 2 — Cached page accessible offline:**
-1. Online: visit a category page and two provider profiles
+**Test 2 — Cached page accessible offline (hard navigation):**
+1. Online: visit a category page and two provider profiles (via hard navigation or reload)
 2. Set Network → Offline
-3. Navigate to those same pages → should load from cache
+3. Navigate to those same pages via direct URL or browser refresh → should load from cache
 
 **Test 3 — Uncached page shows fallback:**
 1. Offline: navigate to a page not previously visited
