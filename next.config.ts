@@ -46,7 +46,7 @@ const withPWA = withPWAInit({
         options: {
           cacheName: "supabase-photos-cache",
           expiration: {
-            maxEntries: 50,
+            maxEntries: 150,
             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
           },
         },
