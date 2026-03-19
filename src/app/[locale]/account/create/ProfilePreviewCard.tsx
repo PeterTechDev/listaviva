@@ -58,13 +58,21 @@ export default function ProfilePreviewCard({
   function handlePublish() {
     setSubmitError(null);
     startTransition(async () => {
-      const fd = collectedDataToFormData(data);
-      const result = await createOwnProvider(fd);
-      // createOwnProvider redirects on success — result only present on error
-      if (result?.error) {
-        setSubmitError(
-          `Erro ao publicar: ${result.error}. Tente novamente.`
-        );
+      try {
+        const fd = collectedDataToFormData(data);
+        const result = await createOwnProvider(fd);
+        // createOwnProvider redirects on success — result only present on error
+        if (result?.error) {
+          setSubmitError(
+            `Erro ao publicar: ${result.error}. Tente novamente.`
+          );
+        }
+      } catch (err) {
+        // Re-throw Next.js internal errors (redirect, notFound) — they must propagate
+        if (typeof err === "object" && err !== null && "digest" in err) {
+          throw err;
+        }
+        setSubmitError("Erro inesperado. Tente novamente.");
       }
     });
   }
@@ -81,7 +89,7 @@ export default function ProfilePreviewCard({
       <div className="bg-surface rounded-2xl border border-border p-5 space-y-4">
 
         {/* Category pills */}
-        {(data.category_ids?.length ?? 0) > 0 && (
+        {providerCategories.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {providerCategories.map((c) => (
               <span
