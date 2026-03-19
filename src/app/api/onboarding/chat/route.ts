@@ -123,6 +123,9 @@ function applyToolCall(
         updated.working_hours = value;
       }
       break;
+    default:
+      console.warn("[onboarding/chat] unknown field in collect_field:", field);
+      break;
   }
   return updated;
 }
@@ -137,84 +140,102 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body: OnboardingRequest = await req.json();
+  let body: OnboardingRequest;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
   const { messages, collectedData: incomingData, failingField } = body;
 
-  // Fetch reference data (small tables, fast)
-  const [{ data: categories }, { data: bairros }] = await Promise.all([
-    supabase.from("categories").select("id, name_pt").order("sort_order"),
-    supabase.from("bairros").select("id, name").order("name"),
-  ]);
+  try {
+    // Fetch reference data (small tables, fast)
+    const [{ data: categories, error: catError }, { data: bairros, error: bairroError }] = await Promise.all([
+      supabase.from("categories").select("id, name_pt").order("sort_order"),
+      supabase.from("bairros").select("id, name").order("name"),
+    ]);
 
-  const systemPrompt = buildSystemPrompt(
-    categories ?? [],
-    bairros ?? [],
-    failingField
-  );
+    if (catError) console.error("[onboarding/chat] categories fetch error:", catError);
+    if (bairroError) console.error("[onboarding/chat] bairros fetch error:", bairroError);
 
-  // Build OpenAI messages array
-  const openaiMessages: OpenAI.ChatCompletionMessageParam[] = [
-    { role: "system", content: systemPrompt },
-    ...messages.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })),
-  ];
+    const systemPrompt = buildSystemPrompt(
+      categories ?? [],
+      bairros ?? [],
+      failingField
+    );
 
-  let collectedData = { ...incomingData };
+    // Build OpenAI messages array
+    const openaiMessages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: "system", content: systemPrompt },
+      ...messages.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+    ];
 
-  // First call — may return tool calls
-  const firstResponse = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: openaiMessages,
-    tools: [COLLECT_FIELD_TOOL],
-    tool_choice: "auto",
-  });
+    let collectedData = { ...incomingData };
 
-  const firstChoice = firstResponse.choices[0];
-  let finalMessage: string;
-
-  if (firstChoice.finish_reason === "tool_calls") {
-    // Process all tool calls and update collectedData
-    const toolCalls = firstChoice.message.tool_calls ?? [];
-    for (const tc of toolCalls) {
-      if ("function" in tc && tc.function.name === "collect_field") {
-        const args = JSON.parse(tc.function.arguments) as {
-          field: string;
-          value: unknown;
-        };
-        collectedData = applyToolCall(collectedData, args.field, args.value);
-      }
-    }
-
-    // Append assistant message + synthetic tool results
-    openaiMessages.push(firstChoice.message);
-    for (const tc of toolCalls) {
-      openaiMessages.push({
-        role: "tool",
-        tool_call_id: tc.id,
-        content: "ok",
-      });
-    }
-
-    // Second call — get the next conversational question (no tools)
-    const secondResponse = await openai.chat.completions.create({
+    // First call — may return tool calls
+    const firstResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: openaiMessages,
-      tool_choice: "none",
+      tools: [COLLECT_FIELD_TOOL],
+      tool_choice: "auto",
     });
-    finalMessage = secondResponse.choices[0].message.content ?? "";
-  } else {
-    finalMessage = firstChoice.message.content ?? "";
+
+    const firstChoice = firstResponse.choices[0];
+    if (!firstChoice) {
+      return NextResponse.json({ error: "LLM returned empty response" }, { status: 502 });
+    }
+    let finalMessage: string;
+
+    if (firstChoice.finish_reason === "tool_calls") {
+      // Process all tool calls and update collectedData
+      const toolCalls = firstChoice.message.tool_calls ?? [];
+      for (const tc of toolCalls) {
+        if ("function" in tc && tc.function.name === "collect_field") {
+          let args: { field: string; value: unknown };
+          try {
+            args = JSON.parse(tc.function.arguments);
+          } catch {
+            continue; // skip malformed tool call
+          }
+          collectedData = applyToolCall(collectedData, args.field, args.value);
+        }
+      }
+
+      // Append assistant message + synthetic tool results
+      openaiMessages.push(firstChoice.message);
+      for (const tc of toolCalls) {
+        openaiMessages.push({
+          role: "tool",
+          tool_call_id: tc.id,
+          content: "ok",
+        });
+      }
+
+      // Second call — get the next conversational question (no tools)
+      const secondResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: openaiMessages,
+        tool_choice: "none",
+      });
+      finalMessage = secondResponse.choices[0]?.message?.content ?? "";
+    } else {
+      finalMessage = firstChoice.message.content ?? "";
+    }
+
+    const complete = isOnboardingComplete(collectedData);
+
+    const response: OnboardingResponse = {
+      message: finalMessage,
+      collectedData,
+      complete,
+    };
+
+    return NextResponse.json(response);
+  } catch (err) {
+    console.error("[onboarding/chat] handler error:", err);
+    return NextResponse.json({ error: "Serviço temporariamente indisponível. Tente novamente." }, { status: 500 });
   }
-
-  const complete = isOnboardingComplete(collectedData);
-
-  const response: OnboardingResponse = {
-    message: finalMessage,
-    collectedData,
-    complete,
-  };
-
-  return NextResponse.json(response);
 }
