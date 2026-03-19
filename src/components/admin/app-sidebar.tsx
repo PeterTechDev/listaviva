@@ -41,27 +41,27 @@ type AdminSidebarProps = {
 
 // ── Nav config ─────────────────────────────────────────────────────────────
 
-function buildNavGroups(locale: string): NavGroup[] {
+function buildNavGroups(): NavGroup[] {
   return [
     {
       label: "Analytics",
       items: [
-        { href: `/${locale}/admin/dashboard`, label: "Dashboard", icon: BarChart3 },
+        { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
       ],
     },
     {
       label: "Catálogo",
       items: [
-        { href: `/${locale}/admin/providers`, label: "Providers", icon: Users },
-        { href: `/${locale}/admin/categories`, label: "Categories", icon: Tag },
-        { href: `/${locale}/admin/bairros`, label: "Bairros", icon: MapPin },
+        { href: "/admin/providers", label: "Providers", icon: Users },
+        { href: "/admin/categories", label: "Categories", icon: Tag },
+        { href: "/admin/bairros", label: "Bairros", icon: MapPin },
       ],
     },
     {
       label: "Moderação",
       items: [
-        { href: `/${locale}/admin/claims`, label: "Claims", icon: FileCheck },
-        { href: `/${locale}/admin/recommendations`, label: "Recommendations", icon: Lightbulb },
+        { href: "/admin/claims", label: "Claims", icon: FileCheck },
+        { href: "/admin/recommendations", label: "Recommendations", icon: Lightbulb },
       ],
     },
   ];
@@ -69,16 +69,16 @@ function buildNavGroups(locale: string): NavGroup[] {
 
 // ── Inner sidebar (client) ─────────────────────────────────────────────────
 
-function SidebarInner({ locale, user }: AdminSidebarProps) {
+function SidebarInner({ user }: AdminSidebarProps) {
   const pathname = usePathname();
-  const navGroups = buildNavGroups(locale);
+  const navGroups = buildNavGroups();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-zinc-800 bg-zinc-950">
       {/* Header */}
       <SidebarHeader className="px-4 py-4 border-b border-zinc-800">
         <Link
-          href={`/${locale}/admin/dashboard`}
+          href="/admin/dashboard"
           className="flex flex-col gap-0.5 select-none"
         >
           <span
@@ -104,10 +104,7 @@ function SidebarInner({ locale, user }: AdminSidebarProps) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  // Match on the last path segment (locale-agnostic)
-                  const isActive = pathname.includes(
-                    item.href.replace(`/${locale}`, "")
-                  );
+                  const isActive = pathname.includes(item.href);
 
                   return (
                     <SidebarMenuItem key={item.href}>
