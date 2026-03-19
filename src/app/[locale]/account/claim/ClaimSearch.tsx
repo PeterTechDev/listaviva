@@ -18,13 +18,19 @@ export default function ClaimSearch() {
   const [searched, setSearched] = useState(false);
   const [claimedId, setClaimedId] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSearch() {
+    setSearchError(null);
     startTransition(async () => {
-      const data = await searchUnownedProviders(query);
-      setResults(data as ProviderResult[]);
-      setSearched(true);
+      try {
+        const data = await searchUnownedProviders(query);
+        setResults(data as ProviderResult[]);
+        setSearched(true);
+      } catch {
+        setSearchError(t("claimSearchError"));
+      }
     });
   }
 
@@ -37,7 +43,7 @@ export default function ClaimSearch() {
       } else if (result.error === "owned") {
         setClaimError(t("claimOwned"));
       } else if (result.error) {
-        setClaimError(result.error);
+        setClaimError(t("claimError"));
       } else {
         setClaimedId(providerId);
       }
@@ -46,7 +52,7 @@ export default function ClaimSearch() {
 
   if (claimedId) {
     return (
-      <div className="p-6 bg-surface border border-border rounded-xl text-primary">
+      <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
         {t("claimSent")}
       </div>
     );
@@ -71,6 +77,10 @@ export default function ClaimSearch() {
           {t("claimSearchButton")}
         </button>
       </div>
+
+      {searchError && (
+        <p className="text-sm text-red-600">{searchError}</p>
+      )}
 
       {claimError && (
         <p className="text-sm text-red-600">{claimError}</p>

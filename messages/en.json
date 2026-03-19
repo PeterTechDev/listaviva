@@ -139,7 +139,9 @@
     "sat": "Saturday",
     "sun": "Sunday",
     "basicInfo": "Basic information",
-    "workingHoursHint": "e.g. 08:00–18:00 · {closed}: leave blank"
+    "workingHoursHint": "e.g. 08:00–18:00 · {closed}: leave blank",
+    "saveError": "Failed to save. Please try again.",
+    "saving": "Saving..."
   },
   "catalog": {
     "browseByCategory": "Browse by category",
@@ -170,7 +172,9 @@
     "claimListingDesc": "Claim an existing listing",
     "recommendCardDesc": "Recommend a new provider",
     "claimSearchButton": "Search",
-    "claimNoResults": "No results found"
+    "claimNoResults": "No results found",
+    "claimSearchError": "Search failed. Please try again.",
+    "claimError": "Claim failed. Please try again."
   },
   "adminClaims": {
     "title": "Claim Requests",

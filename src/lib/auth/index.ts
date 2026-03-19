@@ -20,12 +20,13 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, role, full_name, avatar_url, locale")
     .eq("id", user.id)
     .single();
 
+  if (profileError) console.error("Failed to load user profile:", profileError);
   return profile ?? null;
 }
 

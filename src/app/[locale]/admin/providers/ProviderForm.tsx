@@ -98,18 +98,21 @@ export default function ProviderForm({
     const ext = file.name.split(".").pop();
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     setUploading(true);
-    const { data, error: uploadError } = await supabase.storage
-      .from("provider-photos")
-      .upload(path, file, { upsert: false });
-    setUploading(false);
-    if (uploadError || !data) {
-      setError(`Upload failed: ${uploadError?.message}`);
-      return;
+    try {
+      const { data, error: uploadError } = await supabase.storage
+        .from("provider-photos")
+        .upload(path, file, { upsert: false });
+      if (uploadError || !data) {
+        setError(`Upload failed: ${uploadError?.message}`);
+        return;
+      }
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("provider-photos").getPublicUrl(data.path);
+      setPhotos((prev) => [...prev, publicUrl]);
+    } finally {
+      setUploading(false);
     }
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("provider-photos").getPublicUrl(data.path);
-    setPhotos((prev) => [...prev, publicUrl]);
   }
 
   function toggleCategory(id: string) {
@@ -148,12 +151,16 @@ export default function ProviderForm({
 
   function handleSubmit() {
     startTransition(async () => {
-      const result = await action(buildFormData());
-      if (result && typeof result === "object" && "error" in result && (result as { error?: string }).error) {
-        setError((result as { error?: string }).error!);
-        return;
+      try {
+        const result = await action(buildFormData());
+        if (result && typeof result === "object" && "error" in result && (result as { error?: string }).error) {
+          setError((result as { error?: string }).error!);
+          return;
+        }
+        router.push(redirectTo);
+      } catch {
+        setError(t("saveError"));
       }
-      router.push(redirectTo);
     });
   }
 
@@ -411,7 +418,7 @@ export default function ProviderForm({
             className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handlePhotoUpload(file);
+              if (file) void handlePhotoUpload(file).catch((err) => setError(`Upload failed: ${err?.message}`));
               e.target.value = "";
             }}
           />
@@ -425,7 +432,7 @@ export default function ProviderForm({
           disabled={!name || isPending}
           className="px-6 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover disabled:opacity-50 transition-colors"
         >
-          {isPending ? t("uploadingPhoto") : t("save")}
+          {isPending ? t("saving") : t("save")}
         </button>
         <button
           onClick={() => router.push(redirectTo)}

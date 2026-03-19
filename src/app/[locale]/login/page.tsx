@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
@@ -10,15 +11,18 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? `/${locale}`;
   const error = searchParams.get("error");
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   async function signInWithGoogle() {
+    setOauthError(null);
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}&locale=${locale}`,
       },
     });
+    if (authError) setOauthError(t("common.error"));
   }
 
   return (
@@ -39,9 +43,9 @@ export default function LoginPage() {
           </h2>
 
           {/* Error message */}
-          {error && (
+          {(error || oauthError) && (
             <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
-              {t("common.error")}
+              {oauthError ?? t("common.error")}
             </div>
           )}
 

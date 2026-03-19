@@ -24,9 +24,9 @@ export default async function RecommendPage({
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Header />
-      <main className="flex-1 max-w-lg mx-auto px-4 py-8 w-full">
+      <main className="max-w-lg mx-auto px-4 py-8 w-full">
         <h1 className="text-2xl font-bold text-primary mb-2">{t("recommend")}</h1>
         <p className="text-muted mb-6">{t("recommendDesc")}</p>
         <RecommendForm
@@ -34,12 +34,6 @@ export default async function RecommendPage({
           bairros={bairros ?? []}
         />
       </main>
-
-      <footer className="border-t border-border py-6">
-        <div className="max-w-lg mx-auto px-4 text-center text-sm text-muted">
-          {t("recommend")}
-        </div>
-      </footer>
     </div>
   );
 }

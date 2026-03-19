@@ -139,7 +139,9 @@
     "sat": "Sábado",
     "sun": "Domingo",
     "basicInfo": "Informações básicas",
-    "workingHoursHint": "Ex: 08:00–18:00 · {closed}: deixe em branco"
+    "workingHoursHint": "Ex: 08:00–18:00 · {closed}: deixe em branco",
+    "saveError": "Erro ao salvar. Tente novamente.",
+    "saving": "Salvando..."
   },
   "catalog": {
     "browseByCategory": "Navegar por categoria",
@@ -170,7 +172,9 @@
     "claimListingDesc": "Reivindique um perfil já existente",
     "recommendCardDesc": "Recomende um novo fornecedor",
     "claimSearchButton": "Buscar",
-    "claimNoResults": "Nenhum resultado encontrado"
+    "claimNoResults": "Nenhum resultado encontrado",
+    "claimSearchError": "Erro ao buscar. Tente novamente.",
+    "claimError": "Erro ao reivindicar. Tente novamente."
   },
   "adminClaims": {
     "title": "Reivindicações",

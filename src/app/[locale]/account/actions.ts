@@ -100,8 +100,8 @@ export async function createOwnProvider(formData: FormData) {
       .from("providers")
       .update({ embedding: JSON.stringify(embedding) })
       .eq("id", providerId);
-  } catch {
-    // non-blocking
+  } catch (err) {
+    console.error("Embedding update failed (createOwnProvider):", err);
   }
 
   redirect("/account");
@@ -197,8 +197,8 @@ export async function updateOwnProvider(
       .from("providers")
       .update({ embedding: JSON.stringify(embedding) })
       .eq("id", providerId);
-  } catch {
-    // non-blocking
+  } catch (err) {
+    console.error("Embedding update failed (updateOwnProvider):", err);
   }
 
   revalidatePath("/[locale]/provider/[slug]", "page");
@@ -247,12 +247,13 @@ export async function searchUnownedProviders(query: string) {
   const q = query.trim();
   if (!q) return [];
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("providers")
     .select("id, name, whatsapp, home_bairro:home_bairro_id(name)")
     .is("user_id", null)
     .or(`name.ilike.%${q}%,whatsapp.ilike.%${q}%`)
     .limit(10);
 
+  if (error) throw new Error(error.message);
   return data ?? [];
 }
