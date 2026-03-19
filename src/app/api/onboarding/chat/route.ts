@@ -155,8 +155,13 @@ export async function POST(req: NextRequest) {
       supabase.from("bairros").select("id, name").order("name"),
     ]);
 
-    if (catError) console.error("[onboarding/chat] categories fetch error:", catError);
-    if (bairroError) console.error("[onboarding/chat] bairros fetch error:", bairroError);
+    if (catError || bairroError) {
+      console.error("[onboarding/chat] reference data fetch failed", { catError, bairroError });
+      return NextResponse.json(
+        { error: "Serviço temporariamente indisponível. Tente novamente." },
+        { status: 503 }
+      );
+    }
 
     const systemPrompt = buildSystemPrompt(
       categories ?? [],
@@ -164,13 +169,15 @@ export async function POST(req: NextRequest) {
       failingField
     );
 
-    // Build OpenAI messages array
+    // Build OpenAI messages array — filter to only user/assistant roles from client
     const openaiMessages: OpenAI.ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
-      ...messages.map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
+      ...messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
     ];
 
     let collectedData = { ...incomingData };
@@ -197,8 +204,13 @@ export async function POST(req: NextRequest) {
           let args: { field: string; value: unknown };
           try {
             args = JSON.parse(tc.function.arguments);
-          } catch {
-            continue; // skip malformed tool call
+          } catch (parseErr) {
+            console.error("[onboarding/chat] failed to parse tool call arguments", {
+              toolCallId: tc.id,
+              raw: tc.function.arguments,
+              error: parseErr,
+            });
+            continue;
           }
           collectedData = applyToolCall(collectedData, args.field, args.value);
         }

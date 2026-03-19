@@ -3,6 +3,9 @@
 import { useState, useTransition, useEffect, useRef } from "react";
 import type { CollectedData, ChatMessage } from "@/app/api/onboarding/chat/types";
 
+// Extends ChatMessage with a stable key for React rendering
+type LocalMessage = ChatMessage & { id: string };
+
 interface Props {
   onComplete: (data: CollectedData) => void;
   correctionKey?: number;
@@ -35,7 +38,7 @@ function getCurrentStep(
 }
 
 export default function OnboardingChat({ onComplete, correctionKey }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [collectedData, setCollectedData] = useState<CollectedData>({});
   const [retryCount, setRetryCount] = useState<Record<string, number>>({});
   const [correctionField, setCorrectionField] = useState<string | null>(null);
@@ -43,6 +46,7 @@ export default function OnboardingChat({ onComplete, correctionKey }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  const latestMessagesRef = useRef<LocalMessage[]>([]);
   const latestCollectedDataRef = useRef<CollectedData>({});
   const latestCorrectionFieldRef = useRef<string | null>(null);
   const latestRetryCountRef = useRef<Record<string, number>>({});
@@ -50,6 +54,7 @@ export default function OnboardingChat({ onComplete, correctionKey }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
+  latestMessagesRef.current = messages;
   latestCollectedDataRef.current = collectedData;
   latestCorrectionFieldRef.current = correctionField;
   latestRetryCountRef.current = retryCount;
@@ -87,9 +92,9 @@ export default function OnboardingChat({ onComplete, correctionKey }: Props) {
     currentRetryCount: Record<string, number>,
     isInitial = false,
   ) {
-    const newMessages: ChatMessage[] = isInitial
+    const newMessages: LocalMessage[] = isInitial
       ? []
-      : [...messages, { role: "user" as const, content: userText }];
+      : [...latestMessagesRef.current, { role: "user" as const, content: userText, id: crypto.randomUUID() }];
 
     if (!isInitial) setMessages(newMessages);
     setError(null);
@@ -117,9 +122,10 @@ export default function OnboardingChat({ onComplete, correctionKey }: Props) {
         }
 
         const data = await res.json();
-        const assistantMsg: ChatMessage = {
+        const assistantMsg: LocalMessage = {
           role: "assistant",
           content: data.message,
+          id: crypto.randomUUID(),
         };
         const updatedMessages = [...newMessages, assistantMsg];
         setMessages(updatedMessages);
@@ -147,10 +153,9 @@ export default function OnboardingChat({ onComplete, correctionKey }: Props) {
 
         setCollectedData(newData);
         if (data.complete) onComplete(newData);
-      } catch {
-        setError(
-          "Erro de conexão. Verifique sua internet e tente novamente.",
-        );
+      } catch (err) {
+        console.error("[OnboardingChat] sendMessage failed", err);
+        setError("Erro de conexão. Verifique sua internet e tente novamente.");
       }
     });
   }
@@ -177,9 +182,9 @@ export default function OnboardingChat({ onComplete, correctionKey }: Props) {
     <div className="flex flex-col h-full min-h-[500px]">
       {/* Message list */}
       <div className="flex-1 overflow-y-auto space-y-3 pb-4">
-        {messages.map((msg, i) => (
+        {messages.map((msg) => (
           <div
-            key={i}
+            key={msg.id}
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
